@@ -1,6 +1,9 @@
-# RUN : pip install nbformat nbclient   
-# RUN : pip install ipykernel jupyter nbclient nbformat
-# RUN : python nb_maker.py
+"""
+RUN :
+pip install nbformat nbclient  
+pip install ipykernel jupyter nbclient nbformat
+python nb_maker.py
+"""
 import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 
