@@ -2,7 +2,7 @@
 RUN :
 pip install nbformat nbclient  
 pip install ipykernel jupyter nbclient nbformat
-python nb_maker.py
+python tests/nb_maker.py
 """
 import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
@@ -179,7 +179,7 @@ plt.show()
 nb.cells.append(new_markdown_cell('## Conclusion\n\nDans ce notebook, nous avons créé un jeu de données synthétique et entraîné un modèle de classification avec XGBoost. Nous avons pu visualiser les performances du modèle et identifier les caractéristiques les plus importantes pour la prédiction.'))
 
 # Sauvegarde dans un fichier
-with open('gradient_boosting_analysis.ipynb', 'w') as f:
+with open('tests/gradient_boosting_analysis.ipynb', 'w') as f:
     nbformat.write(nb, f)
 
 # ----- 2eme cas : exécution d'un notebook -----
@@ -188,7 +188,7 @@ import nbformat
 
 try:
     # Chargement du notebook
-    with open('gradient_boosting_analysis.ipynb') as f:
+    with open('tests/gradient_boosting_analysis.ipynb') as f:
         nb = nbformat.read(f, as_version=4)
 
     # Exécution
@@ -196,7 +196,7 @@ try:
     client.execute()
 
     # Sauvegarde du résultat (avec les outputs ajoutés)
-    with open('gradient_boosting_analysis_executed.ipynb', 'w') as f:
+    with open('tests/gradient_boosting_analysis_executed.ipynb', 'w') as f:
         nbformat.write(nb, f)
     
     print("Notebook créé et exécuté avec succès!")
