@@ -1,10 +1,34 @@
-questions:
-  - id: wants_prediction
-    question: "Souhaitez-vous faire des prédictions ?"
+form_questions:
+  - id: has_several_csvs
+    question: "Avez-vous plusieurs fichiers CSV ?"
     type: boolean
 
-  - id: wants_price_analysis
-    question: "Souhaitez-vous faire une analyse de prix ?"
+  - id: number_of_csvs
+    question: "Combien de fichiers CSV avez-vous ?"
+    type: integer
+    depends_on: has_several_csvs == true
+
+  - id: csv_names
+    question: "Quels sont les noms de vos fichiers CSV ?"
+    type: array
+    depends_on: has_several_csvs == true
+
+  - id: has_common_id
+    question: "Vos fichiers CSV ont-ils une colonne ID commune ?"
+    type: boolean
+    depends_on: has_several_csvs == true
+
+  - id: common_id_column
+    question: "Quel est le nom de la colonne ID commune ?"
+    type: string
+    depends_on: has_common_id == true
+
+  - id: target_column
+    question: "Quelle est la colonne cible à prédire ?"
+    type: string
+
+  - id: wants_binary_prediction
+    question: "Souhaitez-vous faire des prédictions binaires ?"
     type: boolean
 
   - id: wants_gradboost
@@ -12,27 +36,24 @@ questions:
     type: boolean
 
   - id: wants_classification_metrics
-    question: "Souhaitez-vous voir les métriques de classification (précision, rappel, F1) ?"
+    question: "Souhaitez-vous voir les métriques de classification ?"
     type: boolean
+    depends_on: wants_binary_prediction == true
 
   - id: wants_regression_metrics
-    question: "Souhaitez-vous voir les métriques de régression (MSE, R²) ?"
-    type: boolean
-
-  - id: wants_dim_reduction
-    question: "Souhaitez-vous effectuer une réduction de dimension (PCA) ?"
+    question: "Souhaitez-vous voir les métriques de régression ?"
     type: boolean
 
 decision_tree:
-  - if: wants_prediction == true
+  - if: has_several_csvs == true && has_common_id == true
+    then:
+      actions:
+        - generate_cell: "merge_datasets"
+
+  - if: wants_binary_prediction == true
     then:
       actions:
         - generate_cell: "prepare_and_train_model"
-
-  - if: wants_price_analysis == true
-    then:
-      actions:
-        - generate_cell: "price_analysis"
 
   - if: wants_gradboost == true
     then:
@@ -49,7 +70,12 @@ decision_tree:
       actions:
         - generate_cell: "regression_metrics"
 
-  - if: wants_dim_reduction == true
+  - if: target_column != null
     then:
       actions:
-        - generate_cell: "dimension_reduction" 
+        - generate_cell: "feature_importance"
+
+  - if: has_several_csvs == true
+    then:
+      actions:
+        - generate_cell: "compare_datasets" 

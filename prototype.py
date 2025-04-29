@@ -29,29 +29,147 @@ def load_datasets():
     df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
     print("Datasets loaded successfully.")
     
-    return df1, df2
-
+    return [df1, df2]
 
 # Simulate the User's answers to the questions
-form_answers = {
-    "has_several_csvs": True,
-    "number_of_csvs": 2,
-    "csv_names": ["dataset1_with_target.csv", "dataset2_features_only.csv"],
-    "has_common_id": True,
-    "common_id_column": "ID",
-    "target_column": "YTarget",
-    "wants_binary_prediction": True,
-    "wants_gradboost": True,
-    "wants_classification_metrics": True,
-    "wants_regression_metrics": True,
-}
+form_answers = """
+has_several_csvs: True,
+number_of_csvs: 2,
+csv_names: ["dataset1_with_target.csv", "dataset2_features_only.csv"],
+has_common_id: True,
+common_id_column: "ID",
+target_column: "YTarget",
+wants_binary_prediction: True,
+wants_gradboost: True,
+wants_classification_metrics: True,
+wants_regression_metrics: True,
+"""
 
-# Generate the code cells based on the answers
-def generate_notebook_cells(df1, df2, responses):
-    """Generate the code cells for the notebook based on the answers."""
+# Get insights from the data
+def get_insights(df, idx):
+    """Get insights from the data."""
+    insights = f"Insights from dataset {idx}:\n"
+    
+    try:
+        # Shape
+        insights += f"Shape: {df.shape}\n"
+        
+        # Info about columns and data types
+        insights += f"Columns: {list(df.columns)}\n"
+        insights += f"Data types:\n{df.dtypes.to_string()}\n"
+        
+        # Missing values
+        missing_values = df.isnull().sum()
+        if missing_values.sum() > 0:
+            insights += f"Missing values:\n{missing_values[missing_values > 0].to_string()}\n"
+        else:
+            insights += "No missing values found.\n"
+        
+        # Basic statistics
+        insights += f"Basic statistics:\n{df.describe().round(2)}\n"
+        
+        # Sample data
+        insights += f"Sample data (first 3 rows):\n{df.head(3).to_string()}\n"
+        
+        # For target column if it exists
+        if 'YTarget' in df.columns:
+            insights += f"Target distribution:\n"
+            insights += f"Unique values: {df['YTarget'].nunique()}\n"
+            insights += f"Value counts:\n{df['YTarget'].value_counts().to_string()}\n"
+        
+        return insights
+    except Exception as e:
+        return f"Error getting insights from dataset {idx}: {str(e)}\n"
+
+
+# Gather the insights from the datasets and form answers as a single string
+def get_insights_and_answers(df1, df2):
+    """Gather the insights from the datasets and form answers as a single string."""
+    insights = ""
+    insights += get_insights(df1, 1)
+    insights += "\n"
+    insights += get_insights(df2, 2)
+    insights += "\n"
+    insights += "User's form answers:\n"
+    insights += form_answers
+    return insights
+
+# Load the decision tree from YAML
+def load_decision_tree():
+    """Load the decision tree from YAML file."""
+    with open('decision_tree.yaml', 'r') as file:
+        tree = yaml.safe_load(file)
+    return tree
+
+# Simulate sending insights and decision tree to Mistral LLM
+def send_to_mistral(insights, decision_tree):
+    """
+    Simulate sending insights and decision tree to Mistral.
+    In a real implementation, this would make an API call to Mistral.
+    """
+    print("Sending insights and decision tree to Mistral LLM...")
+    print(f"Insights length: {len(insights)} characters")
+    print(f"Decision tree has {len(decision_tree['form_questions'])} questions")
+    
+    # Simulate processing time
+    time.sleep(2)
+    
+    # For the prototype, extract actions from the form answers
+    # In a real implementation, Mistral would return these actions based on insights and decision tree
+    actions = []
+    
+    # Parse form_answers to get responses
+    responses = {}
+    for line in form_answers.strip().split('\n'):
+        if ':' in line:
+            key, value = line.split(':', 1)
+            key = key.strip()
+            value = value.strip().rstrip(',')
+            if value.lower() == 'true':
+                responses[key] = True
+            elif value.lower() == 'false':
+                responses[key] = False
+            elif value.startswith('[') and value.endswith(']'):
+                # Parse array
+                values = value[1:-1].split(',')
+                responses[key] = [v.strip().strip('"\'') for v in values]
+            else:
+                try:
+                    responses[key] = int(value)
+                except ValueError:
+                    responses[key] = value.strip('"\'')
+    
+    # Apply decision tree logic to get actions
+    for rule in decision_tree['decision_tree']:
+        condition = rule['if']
+        # Parse the condition
+        var_name, operator, expected_value = condition.split()
+        
+        # Check if the condition is met
+        if var_name in responses:
+            actual_value = responses[var_name]
+            condition_met = False
+            
+            if operator == '==':
+                condition_met = actual_value == expected_value
+            elif operator == '!=':
+                condition_met = actual_value != expected_value
+            
+            if condition_met and 'then' in rule and 'actions' in rule['then']:
+                actions.extend(rule['then']['actions'])
+    
+    print(f"Mistral determined {len(actions)} actions to take:")
+    for action in actions:
+        print(f"  - {action}")
+    
+    return actions
+
+# Generate notebook cells based on the actions from Mistral
+def generate_notebook_cells(df1, df2, actions):
+    """Generate notebook cells based on the actions determined by Mistral."""
     cells = []
     
-    # Standard imports
+    # Add imports cell
     imports_cell = new_code_cell(
         """
 import pandas as pd
@@ -61,92 +179,79 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler
+
+# Set plot style
+plt.style.use('ggplot')
+sns.set(style="whitegrid")
 """
     )
     cells.append(imports_cell)
     
-    # Load data cell
+    # Add data loading cell
     load_data_cell = new_code_cell(
         """
-# Load the datasets
+# Load datasets
+print("Loading datasets...")
 df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
 df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
 
-# Merge the datasets on the ID
-df = pd.merge(df1, df2, on='ID', how='inner')
+print(f"Dataset 1 shape: {df1.shape}")
+print(f"Dataset 2 shape: {df2.shape}")
 
-# Display the first lines
-print("Dimensions du dataset fusionné:", df.shape)
-df.head()
+# Display sample data
+print("\\nSample data from Dataset 1:")
+df1.head(3)
 """
     )
     cells.append(load_data_cell)
     
-    # EDA cell
-    eda_cell = new_code_cell(
+    # Add dataset info cell
+    info_cell = new_code_cell(
         """
-# Descriptive statistics
-print("Statistiques descriptives:")
-df.describe()
+# Basic dataset information
+print("\\nBasic information about Dataset 1:")
+df1.info()
+
+print("\\nBasic information about Dataset 2:")
+df2.info()
+
+# Check for missing values
+print("\\nMissing values in Dataset 1:")
+print(df1.isnull().sum())
+
+print("\\nMissing values in Dataset 2:")
+print(df2.isnull().sum())
 """
     )
-    cells.append(eda_cell)
+    cells.append(info_cell)
     
-    # Conditional cells based on the answers and the decision tree
-    if responses.get("wants_prediction", False):
-        cells.append(new_markdown_cell("## Préparation et entraînement du modèle"))
-        cells.append(new_code_cell(CELL_TEMPLATES.get("prepare_and_train_model", "")))
-    
-    if responses.get("wants_gradboost", False):
-        cells.append(new_markdown_cell("## Entraînement du modèle Gradient Boosting"))
-        cells.append(new_code_cell(CELL_TEMPLATES.get("train_gradboost", "")))
-    
-    if responses.get("wants_price_analysis", False):
-        cells.append(new_markdown_cell("## Analyse des prix"))
-        cells.append(new_code_cell(CELL_TEMPLATES.get("price_analysis", "")))
-    
-    if responses.get("wants_classification_metrics", False):
-        cells.append(new_markdown_cell("## Métriques de classification détaillées"))
-        cells.append(new_code_cell(CELL_TEMPLATES.get("classification_metrics", "")))
-    
-    if responses.get("wants_regression_metrics", False):
-        cells.append(new_markdown_cell("## Métriques de régression détaillées"))
-        cells.append(new_code_cell(CELL_TEMPLATES.get("regression_metrics", "")))
-    
-    if responses.get("wants_dim_reduction", False):
-        cells.append(new_markdown_cell("## Réduction de dimension avec PCA"))
-        cells.append(new_code_cell(CELL_TEMPLATES.get("dimension_reduction", "")))
+    # Add cells based on actions
+    for action in actions:
+        if 'generate_cell' in action:
+            cell_type = action['generate_cell']
+            if cell_type in CELL_TEMPLATES:
+                # Add a markdown title first
+                title = cell_type.replace('_', ' ').title()
+                cells.append(new_markdown_cell(f"## {title}"))
+                
+                # Add the code cell
+                cells.append(new_code_cell(CELL_TEMPLATES[cell_type]))
     
     # Add a conclusion cell
     cells.append(new_markdown_cell("## Conclusion"))
     cells.append(new_code_cell(
         """
-# Summary of the operations performed
-print("Summary of the performed analyses:")
-
-# Display the LLM's responses
-responses = {}
+print("Analysis completed successfully!")
+print("Summary of actions performed:")
 """
-        + "\n".join([f"responses['{key}'] = {value}" for key, value in responses.items()]) +
-        """
-
-for key, value in responses.items():
-    print(f"- {key}: {'Oui' if value else 'Non'}")
-
-# Save the model if trained
-if 'model' in locals():
-    import joblib
-    joblib.dump(model, 'trained_model.joblib')
-    print("The model has been saved in 'trained_model.joblib'")
-"""
+        + "\n".join([f"print(\"- {action['generate_cell'] if 'generate_cell' in action else action}\")" for action in actions])
     ))
     
     return cells
 
-# Création et exécution du notebook
+# Create and execute the notebook
 def create_and_execute_notebook(cells):
-    """Create a notebook with the provided cells and execute it."""
-    # Create the notebook
+    """Create and execute a notebook with the provided cells."""
     nb = new_notebook()
     nb.cells = cells
     
@@ -170,32 +275,42 @@ def create_and_execute_notebook(cells):
         print(f"Notebook executed and saved: {executed_path}")
         return True
     except Exception as e:
-        print(f"Error during the notebook execution: {e}")
+        print(f"Error executing notebook: {e}")
         return False
 
 def main():
-    """Main function that orchestrates the entire pipeline."""
-    print("Starting the automated pipeline...")
+    """Main function orchestrating the pipeline."""
+    print("Starting automated pipeline...")
     
-    # Load or create the datasets
-    df1, df2 = load_datasets()
+    # Load datasets
+    print("Loading datasets...")
+    dfs = load_datasets()
+    df1, df2 = dfs[0], dfs[1]
     
-    # Generate the questions based on the data
-    questions = generate_questions(df1, df2)
+    # Get insights and form answers
+    print("Extracting insights from data...")
+    insights = get_insights_and_answers(df1, df2)
     
-    # Simulate the sending to the LLM and the retrieval of the responses
-    responses = get_llm_responses(questions)
+    # Load decision tree
+    print("Loading decision tree...")
+    decision_tree = load_decision_tree()
     
-    # Generate the notebook cells
-    cells = generate_notebook_cells(df1, df2, responses)
+    # Send to Mistral (simulated)
+    print("Consulting Mistral LLM for notebook generation decisions...")
+    actions = send_to_mistral(insights, decision_tree)
     
-    # Create and execute the notebook
+    # Generate notebook cells
+    print("Generating notebook cells based on Mistral's decisions...")
+    cells = generate_notebook_cells(df1, df2, actions)
+    
+    # Create and execute notebook
+    print("Creating and executing notebook...")
     success = create_and_execute_notebook(cells)
     
     if success:
-        print("Pipeline terminé avec succès!")
+        print("Pipeline completed successfully!")
     else:
-        print("The pipeline has ended with errors.")
+        print("Pipeline completed with errors.")
 
 if __name__ == "__main__":
     main()
