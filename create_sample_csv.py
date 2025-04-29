@@ -34,10 +34,13 @@ def create_synthetic_datasets(n_samples=1000, n_features=10, random_state=42):
     df2['ID'] = ids
     
     # Création des répertoires si nécessaire
-    os.makedirs('Datasets/Both', exist_ok=True)
+    os.makedirs('Datasets/Tabular/Test', exist_ok=True)
     
     # Sauvegarde des datasets
-    df1.to_csv('Datasets/Both/dataset1_with_target.csv', index=False)
-    df2.to_csv('Datasets/Both/dataset2_features_only.csv', index=False)
+    df1.to_csv('Datasets/Tabular/Test/dataset1_with_target.csv', index=False)
+    df2.to_csv('Datasets/Tabular/Test/dataset2_features_only.csv', index=False)
     
     return df1, df2
+
+if __name__ == "__main__":
+    create_synthetic_datasets()
