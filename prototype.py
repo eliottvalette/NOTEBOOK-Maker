@@ -1,14 +1,14 @@
 # prototype.py
 
 """
-Pipeline automatisé pour l'analyse de données et le machine learning.
+This Automated Pipeline is designed to analyze data and machine learning.
 
-Ce script permet de:
-1. Créer/charger deux CSV avec une colonne ID commune
-2. Générer des questions automatiquement selon les données
-3. Envoyer ces éléments à un LLM pour prise de décision
-4. Générer dynamiquement un notebook avec nbformat
-5. Exécuter le notebook et retourner les résultats
+This script allows to:
+1. Load two CSV with a common ID column
+2. Simulate Form answers from the User
+3. Send these elements to an LLM for decision-making
+4. Dynamically generate a notebook with nbformat
+5. Execute the notebook and return the results
 """
 
 import os
@@ -22,146 +22,36 @@ import time
 import random
 from sample_cell_templates import CELL_TEMPLATES
 
-
-
-# Chargement des datasets
+# Load datasets as if the User has submitted them
 def load_datasets():
-    """Charge deux datasets à partir des fichiers CSV."""
-    df1 = pd.read_csv('Datasets/Both/dataset1_with_target.csv')
-    df2 = pd.read_csv('Datasets/Both/dataset2_features_only.csv')
-    print("Datasets chargés avec succès.")
+    """Load two datasets from CSV files."""
+    df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
+    df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
+    print("Datasets loaded successfully.")
     
     return df1, df2
 
-# Génération des questions basées sur les données
-def generate_questions(df1, df2):
-    """Génère des questions pertinentes basées sur les attributs des données."""
-    questions = {
-        "questions": [
-            {
-                "id": "wants_prediction",
-                "question": "Souhaitez-vous faire des prédictions ?",
-                "type": "boolean"
-            },
-            {
-                "id": "wants_price_analysis",
-                "question": "Souhaitez-vous faire une analyse de prix ?",
-                "type": "boolean"
-            },
-            {
-                "id": "wants_gradboost",
-                "question": "Souhaitez-vous utiliser un modèle Gradient Boosting ?",
-                "type": "boolean"
-            }
-        ],
-        "decision_tree": [
-            {
-                "if": "wants_prediction == true",
-                "then": {
-                    "actions": [
-                        {"generate_cell": "prepare_and_train_model"}
-                    ]
-                }
-            },
-            {
-                "if": "wants_price_analysis == true",
-                "then": {
-                    "actions": [
-                        {"generate_cell": "price_analysis"}
-                    ]
-                }
-            },
-            {
-                "if": "wants_gradboost == true",
-                "then": {
-                    "actions": [
-                        {"generate_cell": "train_gradboost"}
-                    ]
-                }
-            }
-        ]
-    }
-    
-    # Détecter si YTarget est une variable de classification ou de régression
-    if 'YTarget' in df1.columns:
-        y = df1['YTarget']
-        is_classification = len(y.unique()) < 20
-        
-        if is_classification:
-            questions["questions"].append({
-                "id": "wants_classification_metrics",
-                "question": "Souhaitez-vous voir les métriques de classification (précision, rappel, F1) ?",
-                "type": "boolean"
-            })
-            questions["decision_tree"].append({
-                "if": "wants_classification_metrics == true",
-                "then": {
-                    "actions": [
-                        {"generate_cell": "classification_metrics"}
-                    ]
-                }
-            })
-        else:
-            questions["questions"].append({
-                "id": "wants_regression_metrics",
-                "question": "Souhaitez-vous voir les métriques de régression (MSE, R²) ?",
-                "type": "boolean"
-            })
-            questions["decision_tree"].append({
-                "if": "wants_regression_metrics == true",
-                "then": {
-                    "actions": [
-                        {"generate_cell": "regression_metrics"}
-                    ]
-                }
-            })
-    
-    # Si on a plus de 5 features, proposer une réduction de dimension
-    if len(df1.columns) > 5:
-        questions["questions"].append({
-            "id": "wants_dim_reduction",
-            "question": "Souhaitez-vous effectuer une réduction de dimension (PCA) ?",
-            "type": "boolean"
-        })
-        questions["decision_tree"].append({
-            "if": "wants_dim_reduction == true",
-            "then": {
-                "actions": [
-                    {"generate_cell": "dimension_reduction"}
-                ]
-            }
-        })
-    
-    # Sauvegarde des questions en YAML
-    with open('decision_tree.yaml', 'w') as f:
-        yaml.dump(questions, f, default_flow_style=False)
-    
-    return questions
 
-# Simulation de l'envoi au LLM et récupération des réponses
-def get_llm_responses(questions):
-    """Simule l'envoi des questions à un LLM et retourne des réponses"""
-    # Dans une implémentation réelle, cette fonction enverrait les questions à Mistral
-    # et traiterait les réponses. Pour l'instant, on simule des réponses.
-    
-    responses = {}
-    for question in questions["questions"]:
-        # Simuler une réponse aléatoire pour les questions booléennes
-        if question["type"] == "boolean":
-            responses[question["id"]] = random.choice([True, False])
-    
-    print("Réponses du LLM (simulées pour le prototype):")
-    for key, value in responses.items():
-        print(f"{key}: {value}")
-    
-    return responses
+# Simulate the User's answers to the questions
+form_answers = {
+    "has_several_csvs": True,
+    "number_of_csvs": 2,
+    "csv_names": ["dataset1_with_target.csv", "dataset2_features_only.csv"],
+    "has_common_id": True,
+    "common_id_column": "ID",
+    "target_column": "YTarget",
+    "wants_binary_prediction": True,
+    "wants_gradboost": True,
+    "wants_classification_metrics": True,
+    "wants_regression_metrics": True,
+}
 
-# Génération des cellules de code selon les réponses
+# Generate the code cells based on the answers
 def generate_notebook_cells(df1, df2, responses):
-    """Génère les cellules de code pour le notebook basé sur les réponses."""
+    """Generate the code cells for the notebook based on the answers."""
     cells = []
     
-    # Cellule d'import standard
+    # Standard imports
     imports_cell = new_code_cell(
         """
 import pandas as pd
@@ -175,34 +65,34 @@ from sklearn.preprocessing import StandardScaler
     )
     cells.append(imports_cell)
     
-    # Cellule de chargement des données
+    # Load data cell
     load_data_cell = new_code_cell(
         """
-# Charger les datasets
-df1 = pd.read_csv('Datasets/Both/dataset1_with_target.csv')
-df2 = pd.read_csv('Datasets/Both/dataset2_features_only.csv')
+# Load the datasets
+df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
+df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
 
-# Fusionner les datasets sur l'ID
+# Merge the datasets on the ID
 df = pd.merge(df1, df2, on='ID', how='inner')
 
-# Afficher les premières lignes
+# Display the first lines
 print("Dimensions du dataset fusionné:", df.shape)
 df.head()
 """
     )
     cells.append(load_data_cell)
     
-    # Analyses exploratoires
+    # EDA cell
     eda_cell = new_code_cell(
         """
-# Statistiques descriptives
+# Descriptive statistics
 print("Statistiques descriptives:")
 df.describe()
 """
     )
     cells.append(eda_cell)
     
-    # Cellules conditionnelles en fonction des réponses et de l'arbre de décision
+    # Conditional cells based on the answers and the decision tree
     if responses.get("wants_prediction", False):
         cells.append(new_markdown_cell("## Préparation et entraînement du modèle"))
         cells.append(new_code_cell(CELL_TEMPLATES.get("prepare_and_train_model", "")))
@@ -227,14 +117,14 @@ df.describe()
         cells.append(new_markdown_cell("## Réduction de dimension avec PCA"))
         cells.append(new_code_cell(CELL_TEMPLATES.get("dimension_reduction", "")))
     
-    # Ajout d'une cellule de conclusion
+    # Add a conclusion cell
     cells.append(new_markdown_cell("## Conclusion"))
     cells.append(new_code_cell(
         """
-# Résumé des opérations effectuées
-print("Résumé des analyses effectuées:")
+# Summary of the operations performed
+print("Summary of the performed analyses:")
 
-# Afficher les réponses du LLM
+# Display the LLM's responses
 responses = {}
 """
         + "\n".join([f"responses['{key}'] = {value}" for key, value in responses.items()]) +
@@ -243,11 +133,11 @@ responses = {}
 for key, value in responses.items():
     print(f"- {key}: {'Oui' if value else 'Non'}")
 
-# Sauvegarder le modèle si entraîné
+# Save the model if trained
 if 'model' in locals():
     import joblib
     joblib.dump(model, 'trained_model.joblib')
-    print("Le modèle a été sauvegardé dans 'trained_model.joblib'")
+    print("The model has been saved in 'trained_model.joblib'")
 """
     ))
     
@@ -255,57 +145,57 @@ if 'model' in locals():
 
 # Création et exécution du notebook
 def create_and_execute_notebook(cells):
-    """Crée un notebook avec les cellules fournies et l'exécute."""
-    # Création du notebook
+    """Create a notebook with the provided cells and execute it."""
+    # Create the notebook
     nb = new_notebook()
     nb.cells = cells
     
-    # Sauvegarde du notebook
+    # Save the notebook
     notebook_path = 'generated_notebook.ipynb'
     with open(notebook_path, 'w') as f:
         nbformat.write(nb, f)
     
-    print(f"Notebook créé: {notebook_path}")
+    print(f"Notebook created: {notebook_path}")
     
-    # Exécution du notebook
+    # Execute the notebook
     try:
         client = nbclient.NotebookClient(nb, timeout=600)
         executed_nb = client.execute()
         
-        # Sauvegarde du notebook exécuté
+        # Save the executed notebook
         executed_path = 'executed_notebook.ipynb'
         with open(executed_path, 'w') as f:
             nbformat.write(executed_nb, f)
         
-        print(f"Notebook exécuté et sauvegardé: {executed_path}")
+        print(f"Notebook executed and saved: {executed_path}")
         return True
     except Exception as e:
-        print(f"Erreur lors de l'exécution du notebook: {e}")
+        print(f"Error during the notebook execution: {e}")
         return False
 
 def main():
-    """Fonction principale qui orchestre tout le pipeline."""
-    print("Démarrage du pipeline automatisé...")
+    """Main function that orchestrates the entire pipeline."""
+    print("Starting the automated pipeline...")
     
-    # Chargement ou création des datasets
+    # Load or create the datasets
     df1, df2 = load_datasets()
     
-    # Génération des questions basées sur les données
+    # Generate the questions based on the data
     questions = generate_questions(df1, df2)
     
-    # Simulation de l'envoi au LLM et récupération des réponses
+    # Simulate the sending to the LLM and the retrieval of the responses
     responses = get_llm_responses(questions)
     
-    # Génération des cellules du notebook
+    # Generate the notebook cells
     cells = generate_notebook_cells(df1, df2, responses)
     
-    # Création et exécution du notebook
+    # Create and execute the notebook
     success = create_and_execute_notebook(cells)
     
     if success:
         print("Pipeline terminé avec succès!")
     else:
-        print("Le pipeline s'est terminé avec des erreurs.")
+        print("The pipeline has ended with errors.")
 
 if __name__ == "__main__":
     main()
