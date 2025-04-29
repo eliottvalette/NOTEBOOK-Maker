@@ -1,0 +1,55 @@
+questions:
+  - id: wants_prediction
+    question: "Souhaitez-vous faire des prédictions ?"
+    type: boolean
+
+  - id: wants_price_analysis
+    question: "Souhaitez-vous faire une analyse de prix ?"
+    type: boolean
+
+  - id: wants_gradboost
+    question: "Souhaitez-vous utiliser un modèle Gradient Boosting ?"
+    type: boolean
+
+  - id: wants_classification_metrics
+    question: "Souhaitez-vous voir les métriques de classification (précision, rappel, F1) ?"
+    type: boolean
+
+  - id: wants_regression_metrics
+    question: "Souhaitez-vous voir les métriques de régression (MSE, R²) ?"
+    type: boolean
+
+  - id: wants_dim_reduction
+    question: "Souhaitez-vous effectuer une réduction de dimension (PCA) ?"
+    type: boolean
+
+decision_tree:
+  - if: wants_prediction == true
+    then:
+      actions:
+        - generate_cell: "prepare_and_train_model"
+
+  - if: wants_price_analysis == true
+    then:
+      actions:
+        - generate_cell: "price_analysis"
+
+  - if: wants_gradboost == true
+    then:
+      actions:
+        - generate_cell: "train_gradboost"
+
+  - if: wants_classification_metrics == true
+    then:
+      actions:
+        - generate_cell: "classification_metrics"
+
+  - if: wants_regression_metrics == true
+    then:
+      actions:
+        - generate_cell: "regression_metrics"
+
+  - if: wants_dim_reduction == true
+    then:
+      actions:
+        - generate_cell: "dimension_reduction" 
