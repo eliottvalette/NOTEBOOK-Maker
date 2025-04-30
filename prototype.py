@@ -5,7 +5,7 @@ This Automated Pipeline is designed to analyze data and machine learning.
 
 This script allows to:
 1. Load two CSV with a common ID column
-2. Simulate Form answers from the User
+2. Simulate Form answers from the User (hardcoded for now)
 3. Send these elements to an LLM for decision-making
 4. Dynamically generate a notebook with nbformat
 5. Execute the notebook and return the results
@@ -112,26 +112,128 @@ def send_to_mistral(insights, decision_tree, mistral_api_key):
     Args:
         insights (str): Insights from the data
         decision_tree (dict): Decision tree from the YAML file
+        mistral_api_key (str): API key for Mistral
         
     Returns:
-        int: ID of the Leaf Node in the Decision Tree
+        list: Actions to perform based on the leaf node identified
     """
+    try:
+        import requests
+        import json
+        
+        # Endpoint for Mistral API
+        url = "https://api.mistral.ai/v1/chat/completions"
+        
+        # Format the decision tree as a readable string for the prompt
+        decision_tree_str = json.dumps(decision_tree, indent=2)
+        
+        # Create the system prompt with instructions
+        system_prompt = """You are an assistant specialized in data analysis.
+                            Your task is to analyze the information about a dataset and determine the appropriate leaf_id
+                            by following the provided decision tree. You must only respond with the leaf_id number, nothing else."""
+                
+        # Create the user prompt with insights and decision tree
+        user_prompt = f"""Here is the information about the data to analyze:
+                        {insights}
+                        And here is the decision tree to follow:
+                        {decision_tree_str}
+                        Based on this information, what is the appropriate leaf_id? Respond only with the number."""
+        
+        # Prepare the headers and payload for the API request
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {mistral_api_key}"
+        }
+        
+        payload = {
+            "model": "mistral-large-latest",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            "temperature": 0.0,  # Low temperature for deterministic responses
+            "max_tokens": 10     # We just need a short response with the leaf_id
+        }
+        
+        print("Sending request to Mistral API...")
+        
+        # Send the request to Mistral API
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()  # Raise an exception for 4XX/5XX responses
+        
+        # Parse the response
+        result = response.json()
+        leaf_id_response = result["choices"][0]["message"]["content"].strip()
+        
+        # Extract the leaf_id (just the number)
+        import re
+        leaf_id_match = re.search(r'\d+', leaf_id_response)
+        if leaf_id_match:
+            leaf_id = int(leaf_id_match.group())
+            print(f"Mistral identified leaf_id: {leaf_id}")
+        else:
+            print(f"Could not extract leaf_id from response: {leaf_id_response}")
+            # Default to leaf_id 2 (merge datasets) if extraction fails
+            leaf_id = 2
+        
+        # Get the actions for this leaf_id
+        actions = get_actions_for_leaf_id(decision_tree, leaf_id)
+        
+        return actions
+        
+    except Exception as e:
+        print(f"Error communicating with Mistral API: {str(e)}")
+        # Fallback to a default action if there's an error
+        return [{"generate_cell": "merge_datasets"}]
 
+def get_actions_for_leaf_id(decision_tree, leaf_id):
+    """Find the actions corresponding to a specific leaf_id in the decision tree.
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    Args:
+        decision_tree (dict): The decision tree structure
+        leaf_id (int): The ID of the leaf node
+        
+    Returns:
+        list: The actions associated with the leaf_id
+    """
+    # Helper function to recursively search the tree
+    def search_tree(node, actions_so_far=[]):
+        if isinstance(node, list):
+            for item in node:
+                result = search_tree(item, actions_so_far.copy())
+                if result:
+                    return result
+        elif isinstance(node, dict):
+            if "leaf_id" in node:
+                if node["leaf_id"] == leaf_id:
+                    # Found our leaf, return all actions collected up to this point
+                    return actions_so_far + [action for action in node["actions"] if "leaf_id" not in action]
+            
+            # Continue searching through children
+            if "if" in node and "then" in node:
+                return search_tree(node["then"], actions_so_far)
+            elif "actions" in node:
+                # Check if this is our leaf
+                leaf_id_action = next((action for action in node["actions"] if isinstance(action, dict) and "leaf_id" in action), None)
+                if leaf_id_action and leaf_id_action["leaf_id"] == leaf_id:
+                    # Return actions without the leaf_id one
+                    return [action for action in node["actions"] if isinstance(action, dict) and "leaf_id" not in action]
+                
+                # Not our leaf, continue searching
+                return search_tree(node["actions"], actions_so_far)
+                
+        return None
+    
+    # Start the search from the root
+    result = search_tree(decision_tree["decision_tree"])
+    
+    if result:
+        return result
+    else:
+        print(f"Warning: No actions found for leaf_id {leaf_id}")
+        # Return a default action if nothing is found
+        return [{"generate_cell": "merge_datasets"}]
 
 # Generate notebook cells based on the actions from Mistral
 def generate_notebook_cells(df1, df2, actions):
@@ -259,15 +361,19 @@ def main():
     # Get insights and form answers
     print("Extracting insights from data...")
     insights = get_insights_and_answers(df1, df2)
+    print(insights)
     
     # Load decision tree
     print("Loading decision tree...")
     decision_tree = load_decision_tree()
+    print(decision_tree)
     
     # Send to Mistral (simulated)
     print("Consulting Mistral LLM for notebook generation decisions...")
-    actions = send_to_mistral(insights, decision_tree)
+    actions = send_to_mistral(insights, decision_tree, mistral_api_key)
+    print(actions)
     
+    """
     # Generate notebook cells
     print("Generating notebook cells based on Mistral's decisions...")
     cells = generate_notebook_cells(df1, df2, actions)
@@ -280,6 +386,7 @@ def main():
         print("Pipeline completed successfully!")
     else:
         print("Pipeline completed with errors.")
+    """
 
 if __name__ == "__main__":
     main()

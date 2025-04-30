@@ -1,74 +1,210 @@
 form_questions:
   - id: data_type
-    question: "Quelle est la nature de vos données ?"
+    question: "What is the nature of your data?"
     type: select
     options:
-      - "Données tabulaires uniquement"
-      - "Images et données tabulaires"
-      - "Images uniquement"
+      - "Tabular data only"
+      - "Images and tabular data"
+      - "Images only"
 
   - id: table_count
-    question: "Combien de tables avez-vous ?"
+    question: "How many tables do you have?"
     type: select
     options:
-      - "Une table"
-      - "Plusieurs tables"
-    depends_on: data_type == "Données tabulaires uniquement"
+      - "One table"
+      - "Multiple tables"
+    depends_on: data_type == "Tabular data only"
 
   - id: multiple_tables_format
-    question: "Quel est le format de vos tables ?"
+    question: "What is the format of your tables?"
     type: select
     options:
       - "CSVs"
-      - "Excel avec plusieurs feuilles"
-    depends_on: table_count == "Plusieurs tables"
+      - "Excel with multiple sheets"
+    depends_on: table_count == "Multiple tables"
 
   - id: csv_join_possibility
-    question: "Est-ce que les CSVs peuvent être joints ?"
+    question: "Can the CSVs be joined?"
     type: select
     options:
-      - "Tous peuvent être joints sur une colonne ID commune"
-      - "Impossibles à joindre"
+      - "All can be joined on a common ID column"
+      - "Cannot be joined"
     depends_on: multiple_tables_format == "CSVs"
 
   - id: common_id_column
-    question: "Quel est le nom de la colonne ID commune ?"
+    question: "What is the name of the common ID column?"
     type: string
-    depends_on: csv_join_possibility == "Tous peuvent être joints sur une colonne ID commune"
+    depends_on: csv_join_possibility == "All can be joined on a common ID column"
 
 decision_tree:
-  - if: data_type == "Données tabulaires uniquement"
+  - if: data_type == "Tabular data only"
     then:
       actions:
-        - if: table_count == "Une table"
+        - if: table_count == "One table"
           then:
             actions:
-              - generate_cell: "process_single_table"
-        - if: table_count == "Plusieurs tables"
+              - leaf_id: 1
+                cell_title: "Process Single Table"
+                cell_content: |
+                  # Process a single table
+                  print("Processing a single table...")
+                  
+                  # Display basic information
+                  print("Table shape:", df1.shape)
+                  print("Column names:", df1.columns.tolist())
+                  
+                  # Check for missing values
+                  missing_values = df1.isnull().sum()
+                  print("Missing values:")
+                  print(missing_values[missing_values > 0] if missing_values.sum() > 0 else "No missing values")
+                  
+                  # Display summary statistics
+                  print("\nSummary statistics:")
+                  df1.describe()
+        - if: table_count == "Multiple tables"
           then:
             actions:
               - if: multiple_tables_format == "CSVs"
                 then:
                   actions:
-                    - if: csv_join_possibility == "Tous peuvent être joints sur une colonne ID commune"
+                    - if: csv_join_possibility == "All can be joined on a common ID column"
                       then:
                         actions:
-                          - generate_cell: "merge_csvs_with_common_id"
-                    - if: csv_join_possibility == "Impossibles à joindre"
+                          - leaf_id: 2
+                            cell_title: "Merge CSVs with Common ID"
+                            cell_content: |
+                              # Merge multiple CSV files on a common ID column
+                              print(f"Merging datasets on column: {common_id_column}")
+                              
+                              # Check if the common ID column exists in both datasets
+                              if common_id_column in df1.columns and common_id_column in df2.columns:
+                                  # Perform the merge
+                                  merged_df = pd.merge(df1, df2, on=common_id_column, how='inner')
+                                  
+                                  print(f"Merged dataset shape: {merged_df.shape}")
+                                  print(f"Original df1 shape: {df1.shape}, df2 shape: {df2.shape}")
+                                  
+                                  # Check how many rows were preserved in the merge
+                                  print(f"Rows preserved: {merged_df.shape[0]} out of {df1.shape[0]} from df1")
+                                  
+                                  # Show the first few rows of the merged dataset
+                                  merged_df.head()
+                              else:
+                                  print(f"Error: Common ID column '{common_id_column}' not found in both datasets")
+                                  print(f"df1 columns: {df1.columns.tolist()}")
+                                  print(f"df2 columns: {df2.columns.tolist()}")
+                    - if: csv_join_possibility == "Cannot be joined"
                       then:
                         actions:
-                          - generate_cell: "ask_user_to_fix_csv_problem"
-              - if: multiple_tables_format == "Excel avec plusieurs feuilles"
+                          - leaf_id: 3
+                            cell_title: "Handle CSVs That Cannot Be Joined"
+                            cell_content: |
+                              # Handle CSV files that cannot be joined
+                              print("Processing multiple CSV files that cannot be joined...")
+                              
+                              # Analyze each dataset separately
+                              print("\n--- Dataset 1 Analysis ---")
+                              print(f"Shape: {df1.shape}")
+                              print(f"Columns: {df1.columns.tolist()}")
+                              print(f"Missing values: {df1.isnull().sum().sum()}")
+                              
+                              print("\n--- Dataset 2 Analysis ---")
+                              print(f"Shape: {df2.shape}")
+                              print(f"Columns: {df2.columns.tolist()}")
+                              print(f"Missing values: {df2.isnull().sum().sum()}")
+                              
+                              print("\nRecommendation: Consider transforming the datasets or defining a common key for joining.")
+              - if: multiple_tables_format == "Excel with multiple sheets"
                 then:
                   actions:
-                    - generate_cell: "process_excel_multiple_sheets"
+                    - leaf_id: 4
+                      cell_title: "Process Excel with Multiple Sheets"
+                      cell_content: |
+                        # Process Excel file with multiple sheets
+                        print("Processing Excel file with multiple sheets...")
+                        
+                        # This would normally read from the actual Excel file
+                        # For now, we'll simulate with our existing dataframes
+                        sheets = {'Sheet1': df1, 'Sheet2': df2}
+                        
+                        # Display information about each sheet
+                        for sheet_name, sheet_data in sheets.items():
+                            print(f"\n--- Sheet: {sheet_name} ---")
+                            print(f"Shape: {sheet_data.shape}")
+                            print(f"Columns: {sheet_data.columns.tolist()}")
+                            
+                        # Check if sheets can be joined
+                        common_columns = set(df1.columns).intersection(set(df2.columns))
+                        print(f"\nCommon columns between sheets: {common_columns}")
+                        
+                        if len(common_columns) > 0:
+                            print(f"Sheets could potentially be joined on columns: {common_columns}")
+                        else:
+                            print("No common columns found for joining sheets.")
 
-  - if: data_type == "Images et données tabulaires"
+  - if: data_type == "Images and tabular data"
     then:
       actions:
-        - generate_cell: "process_images_and_tabular_data"
+        - leaf_id: 5
+          cell_title: "Process Images and Tabular Data"
+          cell_content: |
+            # Process both images and tabular data
+            print("Processing a combined dataset of images and tabular data...")
+            
+            # This would typically include code to:
+            # 1. Load and preprocess images
+            # 2. Extract features from images
+            # 3. Combine with tabular data
+            
+            # For demonstration, we'll just analyze the tabular part
+            print(f"Tabular data shape: {df1.shape}")
+            print(f"Columns: {df1.columns.tolist()}")
+            
+            # Simulate image processing
+            print("\nSimulated image processing:")
+            print("- Number of images: 100")
+            print("- Image dimensions: 224x224 pixels")
+            print("- Images preprocessed and features extracted")
+            
+            # Create a visualization placeholder
+            import matplotlib.pyplot as plt
+            plt.figure(figsize=(10, 6))
+            plt.text(0.5, 0.5, "Image + Tabular Data Analysis\n(Visualization would appear here)", 
+                    horizontalalignment='center', verticalalignment='center', fontsize=14)
+            plt.axis('off')
+            plt.show()
 
-  - if: data_type == "Images uniquement"
+  - if: data_type == "Images only"
     then:
       actions:
-        - generate_cell: "process_images_only" 
+        - leaf_id: 6
+          cell_title: "Process Images Only"
+          cell_content: |
+            # Process image data only
+            print("Processing image dataset...")
+            
+            # This would typically include code to:
+            # 1. Load and preprocess images
+            # 2. Extract features or prepare for deep learning
+            
+            # For demonstration, we'll simulate image processing steps
+            
+            # Simulate image dataset information
+            print("Image dataset information:")
+            print("- Number of images: 1000")
+            print("- Image dimensions: 224x224 pixels")
+            print("- Color channels: RGB (3 channels)")
+            
+            # Simulate preprocessing steps
+            print("\nPreprocessing steps:")
+            print("1. Resize images to uniform dimensions")
+            print("2. Normalize pixel values")
+            print("3. Apply data augmentation (rotation, flipping, etc.)")
+            
+            # Create a visualization placeholder
+            import matplotlib.pyplot as plt
+            plt.figure(figsize=(10, 6))
+            plt.text(0.5, 0.5, "Image Analysis\n(Visualization would appear here)", 
+                    horizontalalignment='center', verticalalignment='center', fontsize=14)
+            plt.axis('off')
+            plt.show() 
