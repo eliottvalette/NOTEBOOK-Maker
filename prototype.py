@@ -21,7 +21,6 @@ import yaml
 import time
 import random
 from dotenv import load_dotenv
-from sample_cell_templates import CELL_TEMPLATES
 
 load_dotenv()   
 mistral_api_key = os.getenv('MISTRAL_API_KEY')
@@ -70,7 +69,7 @@ def get_insights(df, idx):
             insights += "No missing values found.\n"
         
         # Basic statistics
-        insights += f"Basic statistics:\n{df.describe().round(2)}\n"
+        # insights += f"Basic statistics:\n{df.describe().round(2)}\n"
         
         # Sample data
         insights += f"Sample data (first 3 rows):\n{df.head(3).to_string()}\n"
@@ -178,16 +177,15 @@ def send_to_mistral(insights, decision_tree, mistral_api_key):
             leaf_id = 2
         
         # Get the actions for this leaf_id
-        actions = get_actions_for_leaf_id(decision_tree, leaf_id)
+        cell_code = get_cells_for_leaf_id(decision_tree, leaf_id)
         
-        return actions
+        return cell_code
         
     except Exception as e:
         print(f"Error communicating with Mistral API: {str(e)}")
-        # Fallback to a default action if there's an error
-        return [{"generate_cell": "merge_datasets"}]
+        raise e
 
-def get_actions_for_leaf_id(decision_tree, leaf_id):
+def get_cells_for_leaf_id(decision_tree, leaf_id):
     """Find the actions corresponding to a specific leaf_id in the decision tree.
     
     Args:
@@ -195,158 +193,215 @@ def get_actions_for_leaf_id(decision_tree, leaf_id):
         leaf_id (int): The ID of the leaf node
         
     Returns:
-        list: The actions associated with the leaf_id
+        dict: The leaf node with cell_title and cell_content
     """
-    # Helper function to recursively search the tree
-    def search_tree(node, actions_so_far=[]):
+    # Parcourir récursivement l'arbre de décision pour trouver la feuille avec l'ID spécifié
+    def find_leaf(node, target_leaf_id):
         if isinstance(node, list):
             for item in node:
-                result = search_tree(item, actions_so_far.copy())
+                result = find_leaf(item, target_leaf_id)
                 if result:
                     return result
         elif isinstance(node, dict):
-            if "leaf_id" in node:
-                if node["leaf_id"] == leaf_id:
-                    # Found our leaf, return all actions collected up to this point
-                    return actions_so_far + [action for action in node["actions"] if "leaf_id" not in action]
+            if 'leaf_id' in node and node['leaf_id'] == target_leaf_id:
+                return node
             
-            # Continue searching through children
-            if "if" in node and "then" in node:
-                return search_tree(node["then"], actions_so_far)
-            elif "actions" in node:
-                # Check if this is our leaf
-                leaf_id_action = next((action for action in node["actions"] if isinstance(action, dict) and "leaf_id" in action), None)
-                if leaf_id_action and leaf_id_action["leaf_id"] == leaf_id:
-                    # Return actions without the leaf_id one
-                    return [action for action in node["actions"] if isinstance(action, dict) and "leaf_id" not in action]
-                
-                # Not our leaf, continue searching
-                return search_tree(node["actions"], actions_so_far)
-                
+            for key, value in node.items():
+                result = find_leaf(value, target_leaf_id)
+                if result:
+                    return result
         return None
     
-    # Start the search from the root
-    result = search_tree(decision_tree["decision_tree"])
+    # Rechercher le nœud feuille dans l'arbre de décision
+    leaf_node = find_leaf(decision_tree, leaf_id)
     
-    if result:
-        return result
+    if leaf_node:
+        print(leaf_node)  # Debug - afficher le nœud trouvé
+        return leaf_node
     else:
-        print(f"Warning: No actions found for leaf_id {leaf_id}")
-        # Return a default action if nothing is found
-        return [{"generate_cell": "merge_datasets"}]
+        print(f"Leaf node with ID {leaf_id} not found in the decision tree.")
+        # Retourner un nœud par défaut pour éviter les erreurs
+        return {
+            'leaf_id': leaf_id,
+            'cell_title': 'Default Analysis',
+            'cell_content': '# Analyse par défaut\nprint("Aucun nœud correspondant trouvé dans l\'arbre de décision.")\nprint("Affichage des premières lignes des datasets:")\nprint("\\ndf1:")\nprint(df1.head())\nprint("\\ndf2:")\nprint(df2.head())'
+        }
 
-# Generate notebook cells based on the actions from Mistral
 def generate_notebook_cells(df1, df2, actions):
-    """Generate notebook cells based on the actions determined by Mistral."""
+    """Generate notebook cells based on actions.
+    
+    Args:
+        df1 (DataFrame): First dataset
+        df2 (DataFrame): Second dataset
+        actions (dict): Actions to perform
+        
+    Returns:
+        list: List of notebook cells
+    """
     cells = []
     
-    # Add imports cell
-    imports_cell = new_code_cell(
-        """
+    # Extraire common_id_column du formulaire
+    import re
+    common_id_match = re.search(r'common_id_column: "([^"]+)"', form_answers)
+    common_id_column = common_id_match.group(1) if common_id_match else 'ID'
+    
+    # Ajouter une cellule d'introduction
+    cells.append(new_markdown_cell("# Analyse de données automatisée\n\nCe notebook a été généré automatiquement en fonction des données fournies et des réponses au formulaire."))
+    
+    # Ajouter une cellule pour importer les bibliothèques nécessaires
+    imports_cell = new_code_cell("""
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, accuracy_score, classification_report
-from sklearn.preprocessing import StandardScaler
-
-# Set plot style
-plt.style.use('ggplot')
-sns.set(style="whitegrid")
-"""
-    )
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import warnings
+warnings.filterwarnings('ignore')
+""")
     cells.append(imports_cell)
     
-    # Add data loading cell
-    load_data_cell = new_code_cell(
-        """
-# Load datasets
-print("Loading datasets...")
+    # Ajouter une cellule pour charger les données et définir common_id_column
+    load_data_cell = new_code_cell(f"""
+# Chargement des données
 df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
 df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
 
-print(f"Dataset 1 shape: {df1.shape}")
-print(f"Dataset 2 shape: {df2.shape}")
+# Définir la colonne d'ID commune
+common_id_column = "{common_id_column}"
 
-# Display sample data
-print("\\nSample data from Dataset 1:")
-df1.head(3)
-"""
-    )
+print("df1 shape:", df1.shape)
+print("df2 shape:", df2.shape)
+print(f"Colonne ID commune: {{common_id_column}}")
+""")
     cells.append(load_data_cell)
     
-    # Add dataset info cell
-    info_cell = new_code_cell(
-        """
-# Basic dataset information
-print("\\nBasic information about Dataset 1:")
-df1.info()
-
-print("\\nBasic information about Dataset 2:")
-df2.info()
-
-# Check for missing values
-print("\\nMissing values in Dataset 1:")
-print(df1.isnull().sum())
-
-print("\\nMissing values in Dataset 2:")
-print(df2.isnull().sum())
-"""
-    )
-    cells.append(info_cell)
+    # Ajouter la cellule correspondant au leaf_id identifié
+    if actions and 'cell_title' in actions and 'cell_content' in actions:
+        # Ajouter le titre comme cellule markdown
+        cells.append(new_markdown_cell(f"## {actions['cell_title']}"))
+        
+        # Ajouter le contenu comme cellule de code
+        cells.append(new_code_cell(actions['cell_content']))
     
-    # Add cells based on actions
-    for action in actions:
-        if 'generate_cell' in action:
-            cell_type = action['generate_cell']
-            if cell_type in CELL_TEMPLATES:
-                # Add a markdown title first
-                title = cell_type.replace('_', ' ').title()
-                cells.append(new_markdown_cell(f"## {title}"))
-                
-                # Add the code cell
-                cells.append(new_code_cell(CELL_TEMPLATES[cell_type]))
+    # Ajouter des cellules d'analyse supplémentaires si nécessaire
+    if 'YTarget' in df1.columns:
+        target_analysis_cell = new_code_cell("""
+# Analyse de la variable cible
+if 'YTarget' in merged_df.columns:
+    print("Distribution de la variable cible:")
+    target_counts = merged_df['YTarget'].value_counts()
+    print(target_counts)
     
-    # Add a conclusion cell
-    cells.append(new_markdown_cell("## Conclusion"))
-    cells.append(new_code_cell(
-        """
-print("Analysis completed successfully!")
-print("Summary of actions performed:")
-"""
-        + "\n".join([f"print(\"- {action['generate_cell'] if 'generate_cell' in action else action}\")" for action in actions])
-    ))
+    plt.figure(figsize=(10, 6))
+    sns.countplot(x='YTarget', data=merged_df)
+    plt.title('Distribution de la variable cible')
+    plt.show()
+""")
+        cells.append(target_analysis_cell)
+    
+    # Ajouter une cellule pour créer un modèle de base
+    model_cell = new_code_cell("""
+# Préparation des données pour la modélisation
+if 'YTarget' in merged_df.columns:
+    # Séparer les features et la cible
+    X = merged_df.drop(['YTarget', 'ID'], axis=1)
+    y = merged_df['YTarget']
+    
+    # Diviser en ensembles d'entraînement et de test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Entraîner un modèle GradientBoosting
+    model = GradientBoostingClassifier(random_state=42)
+    model.fit(X_train, y_train)
+    
+    # Évaluer le modèle
+    y_pred = model.predict(X_test)
+    
+    print("Accuracy:", accuracy_score(y_test, y_pred))
+    print("Precision:", precision_score(y_test, y_pred))
+    print("Recall:", recall_score(y_test, y_pred))
+    print("F1 Score:", f1_score(y_test, y_pred))
+    
+    # Afficher la matrice de confusion
+    plt.figure(figsize=(8, 6))
+    cm = confusion_matrix(y_test, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.title('Matrice de confusion')
+    plt.xlabel('Prédit')
+    plt.ylabel('Réel')
+    plt.show()
+    
+    # Afficher l'importance des features
+    plt.figure(figsize=(12, 8))
+    feature_importance = pd.DataFrame({
+        'features': X.columns,
+        'importance': model.feature_importances_
+    }).sort_values('importance', ascending=False)
+    
+    sns.barplot(x='importance', y='features', data=feature_importance.head(15))
+    plt.title('Importance des features')
+    plt.show()
+""")
+    cells.append(model_cell)
+    
+    # Ajouter une cellule de conclusion
+    cells.append(new_markdown_cell("## Conclusion\n\nCe notebook a automatiquement analysé vos données et créé un modèle de base. Vous pouvez maintenant explorer davantage les données et améliorer le modèle selon vos besoins."))
     
     return cells
 
-# Create and execute the notebook
 def create_and_execute_notebook(cells):
-    """Create and execute a notebook with the provided cells."""
-    nb = new_notebook()
-    nb.cells = cells
+    """Create and execute a notebook with the given cells.
     
-    # Save the notebook
-    notebook_path = 'generated_notebook.ipynb'
-    with open(notebook_path, 'w') as f:
-        nbformat.write(nb, f)
-    
-    print(f"Notebook created: {notebook_path}")
-    
-    # Execute the notebook
+    Args:
+        cells (list): List of notebook cells
+        
+    Returns:
+        bool: True if the notebook was created and executed successfully
+    """
     try:
-        client = nbclient.NotebookClient(nb, timeout=600)
-        executed_nb = client.execute()
+        # Créer un nouveau notebook avec les cellules fournies
+        notebook = new_notebook(cells=cells)
         
-        # Save the executed notebook
-        executed_path = 'executed_notebook.ipynb'
-        with open(executed_path, 'w') as f:
-            nbformat.write(executed_nb, f)
+        # Définir le nom du fichier de sortie
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        output_filename = f"generated_notebook_{timestamp}.ipynb"
         
-        print(f"Notebook executed and saved: {executed_path}")
-        return True
+        # Sauvegarder le notebook
+        with open(output_filename, 'w', encoding='utf-8') as f:
+            nbformat.write(notebook, f)
+        
+        print(f"Notebook créé et sauvegardé sous le nom : {output_filename}")
+        
+        # Exécuter le notebook en utilisant nbclient
+        print("Exécution du notebook...")
+        try:
+            client = nbclient.NotebookClient(
+                notebook,
+                timeout=600,
+                kernel_name='python3',
+                resources={'path': '.'}
+            )
+            executed_nb = client.execute()
+            
+            # Sauvegarder le notebook exécuté
+            executed_filename = f"executed_notebook_{timestamp}.ipynb"
+            with open(executed_filename, 'w', encoding='utf-8') as f:
+                nbformat.write(executed_nb, f)
+            
+            print(f"Notebook exécuté et résultats sauvegardés sous le nom : {executed_filename}")
+            
+            return True
+        except Exception as exec_error:
+            print(f"Erreur lors de l'exécution du notebook: {str(exec_error)}")
+            print("Le notebook a été généré mais n'a pas pu être exécuté automatiquement.")
+            print(f"Vous pouvez exécuter manuellement le notebook: {output_filename}")
+            return False
+    
     except Exception as e:
-        print(f"Error executing notebook: {e}")
+        print(f"Erreur lors de la création du notebook: {str(e)}")
         return False
 
 def main():
@@ -372,8 +427,7 @@ def main():
     print("Consulting Mistral LLM for notebook generation decisions...")
     actions = send_to_mistral(insights, decision_tree, mistral_api_key)
     print(actions)
-    
-    """
+
     # Generate notebook cells
     print("Generating notebook cells based on Mistral's decisions...")
     cells = generate_notebook_cells(df1, df2, actions)
@@ -386,7 +440,6 @@ def main():
         print("Pipeline completed successfully!")
     else:
         print("Pipeline completed with errors.")
-    """
 
 if __name__ == "__main__":
     main()
