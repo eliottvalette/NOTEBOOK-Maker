@@ -158,17 +158,17 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
         print("Sending request to Mistral API...")
         
         if not simulate:
-            # Send the request to Mistral API
-            response = requests.post(url, headers=headers, json=payload)
-            response.raise_for_status()  # Raise an exception for 4XX/5XX responses
-
-            # Parse the response
-            result = response.json()
+        # Send the request to Mistral API
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()  # Raise an exception for 4XX/5XX responses
+        
+        # Parse the response
+        result = response.json()
         else : 
             result = {'id': 'c19deca4e9a940fdb562e45be3a70163', 'object': 'chat.completion', 'created': 1746017866, 'model': 'mistral-large-latest', 'choices': [{'index': 0, 'message': {'role': 'assistant', 'tool_calls': None, 'content': '2'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 3645, 'total_tokens': 3648, 'completion_tokens': 3}}
         
         leaf_id_response = result["choices"][0]["message"]["content"].strip()
-
+        
         # Extract the leaf_id (just the number)
         import re
         leaf_id_match = re.search(r'\d+', leaf_id_response)
