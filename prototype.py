@@ -372,7 +372,19 @@ print(f"Colonne ID commune: {{common_id_column}}")
         # Ajouter la cellule correspondant au leaf_id identifié
         if actions and 'cell_title' in actions and 'cell_content' in actions:
             cells.append(new_markdown_cell(f"## {actions['cell_title']}"))
-            cells.append(new_code_cell(actions['cell_content']))
+            
+            # Traiter le contenu selon son format (chaîne ou liste)
+            if isinstance(actions['cell_content'], list):
+                # Si cell_content est une liste de cellules
+                for cell_item in actions['cell_content']:
+                    if cell_item.get('type') == 'markdown':
+                        cells.append(new_markdown_cell(cell_item.get('content', '')))
+                    elif cell_item.get('type') == 'code':
+                        cells.append(new_code_cell(cell_item.get('content', '')))
+                    # Ignore les types inconnus
+            else:
+                # Pour la rétrocompatibilité, si cell_content est une chaîne
+                cells.append(new_code_cell(actions['cell_content']))
         
         # Cellule de conclusion
         cells.append(new_markdown_cell("## Conclusion\n\nCe notebook a automatiquement analysé vos données et créé un modèle de base. Vous pouvez maintenant explorer davantage les données et améliorer le modèle selon vos besoins."))
@@ -394,7 +406,7 @@ def create_and_execute_notebook(cells):
         
         # Définir le nom du fichier de sortie
         timestamp = time.strftime("%Hh-%Mm-%Ss")
-        output_filename = f"generated_notebook_{timestamp}.ipynb"
+        output_filename = f"Output/generated_notebook_{timestamp}.ipynb"
         
         # Sauvegarder le notebook
         with open(output_filename, 'w', encoding='utf-8') as f:
@@ -414,7 +426,7 @@ def create_and_execute_notebook(cells):
             executed_nb = client.execute()
             
             # Sauvegarder le notebook exécuté
-            executed_filename = f"executed_notebook_{timestamp}.ipynb"
+            executed_filename = f"Output/executed_notebook_{timestamp}.ipynb"
             with open(executed_filename, 'w', encoding='utf-8') as f:
                 nbformat.write(executed_nb, f)
             

@@ -124,7 +124,7 @@ if 'merged_df' in locals():
     # Distribution des variables numériques
     num_cols = merged_df.select_dtypes(include=[np.number]).columns
     if len(num_cols) > 0:
-        print("\nDistribution des variables numériques:")
+        print("Distribution des variables numériques:")
         n_cols = min(len(num_cols), 4)
         n_rows = (len(num_cols) + n_cols - 1) // n_cols
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 3*n_rows))
