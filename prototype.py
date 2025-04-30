@@ -158,12 +158,12 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
         print("Sending request to Mistral API...")
         
         if not simulate:
-        # Send the request to Mistral API
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()  # Raise an exception for 4XX/5XX responses
-        
-        # Parse the response
-        result = response.json()
+            # Send the request to Mistral API
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()  # Raise an exception for 4XX/5XX responses
+            
+            # Parse the response
+            result = response.json()
         else : 
             result = {'id': 'c19deca4e9a940fdb562e45be3a70163', 'object': 'chat.completion', 'created': 1746017866, 'model': 'mistral-large-latest', 'choices': [{'index': 0, 'message': {'role': 'assistant', 'tool_calls': None, 'content': '2'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 3645, 'total_tokens': 3648, 'completion_tokens': 3}}
         
@@ -308,11 +308,20 @@ print("df2 shape:", df2.shape)
         
         # Ajouter la cellule correspondant au leaf_id identifié
         if actions and 'cell_title' in actions and 'cell_content' in actions:
-            # Ajouter le titre comme cellule markdown
             cells.append(new_markdown_cell(f"## {actions['cell_title']}"))
             
-            # Ajouter le contenu comme cellule de code
-            cells.append(new_code_cell(actions['cell_content']))
+            # Traiter le contenu selon son format (chaîne ou liste)
+            if isinstance(actions['cell_content'], list):
+                # Si cell_content est une liste de cellules
+                for cell_item in actions['cell_content']:
+                    if cell_item.get('type') == 'markdown':
+                        cells.append(new_markdown_cell(cell_item.get('content', '')))
+                    elif cell_item.get('type') == 'code':
+                        cells.append(new_code_cell(cell_item.get('content', '')))
+                    # Ignore les types inconnus
+            else:
+                # Pour la rétrocompatibilité, si cell_content est une chaîne
+                cells.append(new_code_cell(actions['cell_content']))
         
         # Ajouter des cellules d'analyse supplémentaires selon le type de données
         analysis_cells = get_analysis_cells(df1, df2)

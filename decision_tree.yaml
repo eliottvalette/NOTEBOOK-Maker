@@ -8,22 +8,34 @@ decision_tree:
               - leaf_id: 1
                 cell_title: "Process Single Table"
                 arguments: []
-                cell_content: |
-                  # Process a single table
-                  print("Processing a single table...")
+                cell_content:
+                  - type: "markdown"
+                    content: |
+                      # Analyse d'une table unique
+                      
+                      Cette section traite l'analyse d'un seul jeu de données. Nous allons examiner ses caractéristiques principales.
                   
-                  # Display basic information
-                  print("Table shape:", df1.shape)
-                  print("Column names:", df1.columns.tolist())
+                  - type: "code"
+                    content: |
+                      # Affichage des informations de base
+                      print("Processing a single table...")
+                      
+                      # Display basic information
+                      print("Table shape:", df1.shape)
+                      print("Column names:", df1.columns.tolist())
                   
-                  # Check for missing values
-                  missing_values = df1.isnull().sum()
-                  print("Missing values:")
-                  print(missing_values[missing_values > 0] if missing_values.sum() > 0 else "No missing values")
+                  - type: "code"
+                    content: |
+                      # Vérification des valeurs manquantes
+                      missing_values = df1.isnull().sum()
+                      print("Missing values:")
+                      print(missing_values[missing_values > 0] if missing_values.sum() > 0 else "No missing values")
                   
-                  # Display summary statistics
-                  print("\nSummary statistics:")
-                  df1.describe()
+                  - type: "code"
+                    content: |
+                      # Statistiques descriptives
+                      print("\nSummary statistics:")
+                      df1.describe()
         - if: table_count == "Multiple tables"
           then:
             actions:
@@ -36,27 +48,41 @@ decision_tree:
                           - leaf_id: 2
                             cell_title: "Merge CSVs with Common ID"
                             arguments: ["common_id_column"]
-                            cell_content: |
-                              # Merge multiple CSV files on a common ID column
-                              print(f"Merging datasets on column: {common_id_column}")
+                            cell_content:
+                              - type: "markdown"
+                                content: |
+                                  # Fusion de CSVs avec un ID commun
+                                  
+                                  Cette section fusionne deux jeux de données en utilisant une colonne d'identifiant commune.
                               
-                              # Check if the common ID column exists in both datasets
-                              if common_id_column in df1.columns and common_id_column in df2.columns:
-                                  # Perform the merge
-                                  merged_df = pd.merge(df1, df2, on=common_id_column, how='inner')
+                              - type: "code"
+                                content: |
+                                  # Vérification et préparation de la fusion
+                                  print(f"Merging datasets on column: {common_id_column}")
                                   
-                                  print(f"Merged dataset shape: {merged_df.shape}")
-                                  print(f"Original df1 shape: {df1.shape}, df2 shape: {df2.shape}")
-                                  
-                                  # Check how many rows were preserved in the merge
-                                  print(f"Rows preserved: {merged_df.shape[0]} out of {df1.shape[0]} from df1")
-                                  
-                                  # Show the first few rows of the merged dataset
-                                  merged_df.head()
-                              else:
-                                  print(f"Error: Common ID column '{common_id_column}' not found in both datasets")
-                                  print(f"df1 columns: {df1.columns.tolist()}")
-                                  print(f"df2 columns: {df2.columns.tolist()}")
+                                  # Check if the common ID column exists in both datasets
+                                  if common_id_column in df1.columns and common_id_column in df2.columns:
+                                      print(f"✓ Column '{common_id_column}' found in both datasets")
+                                  else:
+                                      print(f"❌ Error: Common ID column '{common_id_column}' not found in both datasets")
+                                      print(f"df1 columns: {df1.columns.tolist()}")
+                                      print(f"df2 columns: {df2.columns.tolist()}")
+                              
+                              - type: "code"
+                                content: |
+                                  # Exécution de la fusion
+                                  if common_id_column in df1.columns and common_id_column in df2.columns:
+                                      # Perform the merge
+                                      merged_df = pd.merge(df1, df2, on=common_id_column, how='inner')
+                                      
+                                      print(f"Merged dataset shape: {merged_df.shape}")
+                                      print(f"Original df1 shape: {df1.shape}, df2 shape: {df2.shape}")
+                                      
+                                      # Check how many rows were preserved in the merge
+                                      print(f"Rows preserved: {merged_df.shape[0]} out of {df1.shape[0]} from df1")
+                                      
+                                      # Show the first few rows of the merged dataset
+                                      merged_df.head()
                     - if: csv_join_possibility == "Cannot be joined"
                       then:
                         actions:
