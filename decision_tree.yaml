@@ -1,81 +1,74 @@
 form_questions:
-  - id: has_several_csvs
-    question: "Avez-vous plusieurs fichiers CSV ?"
-    type: boolean
+  - id: data_type
+    question: "Quelle est la nature de vos données ?"
+    type: select
+    options:
+      - "Données tabulaires uniquement"
+      - "Images et données tabulaires"
+      - "Images uniquement"
 
-  - id: number_of_csvs
-    question: "Combien de fichiers CSV avez-vous ?"
-    type: integer
-    depends_on: has_several_csvs == true
+  - id: table_count
+    question: "Combien de tables avez-vous ?"
+    type: select
+    options:
+      - "Une table"
+      - "Plusieurs tables"
+    depends_on: data_type == "Données tabulaires uniquement"
 
-  - id: csv_names
-    question: "Quels sont les noms de vos fichiers CSV ?"
-    type: array
-    depends_on: has_several_csvs == true
+  - id: multiple_tables_format
+    question: "Quel est le format de vos tables ?"
+    type: select
+    options:
+      - "CSVs"
+      - "Excel avec plusieurs feuilles"
+    depends_on: table_count == "Plusieurs tables"
 
-  - id: has_common_id
-    question: "Vos fichiers CSV ont-ils une colonne ID commune ?"
-    type: boolean
-    depends_on: has_several_csvs == true
+  - id: csv_join_possibility
+    question: "Est-ce que les CSVs peuvent être joints ?"
+    type: select
+    options:
+      - "Tous peuvent être joints sur une colonne ID commune"
+      - "Impossibles à joindre"
+    depends_on: multiple_tables_format == "CSVs"
 
   - id: common_id_column
     question: "Quel est le nom de la colonne ID commune ?"
     type: string
-    depends_on: has_common_id == true
-
-  - id: target_column
-    question: "Quelle est la colonne cible à prédire ?"
-    type: string
-
-  - id: wants_binary_prediction
-    question: "Souhaitez-vous faire des prédictions binaires ?"
-    type: boolean
-
-  - id: wants_gradboost
-    question: "Souhaitez-vous utiliser un modèle Gradient Boosting ?"
-    type: boolean
-
-  - id: wants_classification_metrics
-    question: "Souhaitez-vous voir les métriques de classification ?"
-    type: boolean
-    depends_on: wants_binary_prediction == true
-
-  - id: wants_regression_metrics
-    question: "Souhaitez-vous voir les métriques de régression ?"
-    type: boolean
+    depends_on: csv_join_possibility == "Tous peuvent être joints sur une colonne ID commune"
 
 decision_tree:
-  - if: has_several_csvs == true && has_common_id == true
+  - if: data_type == "Données tabulaires uniquement"
     then:
       actions:
-        - generate_cell: "merge_datasets"
+        - if: table_count == "Une table"
+          then:
+            actions:
+              - generate_cell: "process_single_table"
+        - if: table_count == "Plusieurs tables"
+          then:
+            actions:
+              - if: multiple_tables_format == "CSVs"
+                then:
+                  actions:
+                    - if: csv_join_possibility == "Tous peuvent être joints sur une colonne ID commune"
+                      then:
+                        actions:
+                          - generate_cell: "merge_csvs_with_common_id"
+                    - if: csv_join_possibility == "Impossibles à joindre"
+                      then:
+                        actions:
+                          - generate_cell: "ask_user_to_fix_csv_problem"
+              - if: multiple_tables_format == "Excel avec plusieurs feuilles"
+                then:
+                  actions:
+                    - generate_cell: "process_excel_multiple_sheets"
 
-  - if: wants_binary_prediction == true
+  - if: data_type == "Images et données tabulaires"
     then:
       actions:
-        - generate_cell: "prepare_and_train_model"
+        - generate_cell: "process_images_and_tabular_data"
 
-  - if: wants_gradboost == true
+  - if: data_type == "Images uniquement"
     then:
       actions:
-        - generate_cell: "train_gradboost"
-
-  - if: wants_classification_metrics == true
-    then:
-      actions:
-        - generate_cell: "classification_metrics"
-
-  - if: wants_regression_metrics == true
-    then:
-      actions:
-        - generate_cell: "regression_metrics"
-
-  - if: target_column != null
-    then:
-      actions:
-        - generate_cell: "feature_importance"
-
-  - if: has_several_csvs == true
-    then:
-      actions:
-        - generate_cell: "compare_datasets" 
+        - generate_cell: "process_images_only" 

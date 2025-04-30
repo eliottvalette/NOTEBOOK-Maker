@@ -20,7 +20,11 @@ import nbclient
 import yaml
 import time
 import random
+from dotenv import load_dotenv
 from sample_cell_templates import CELL_TEMPLATES
+
+load_dotenv()   
+mistral_api_key = os.getenv('MISTRAL_API_KEY')
 
 # Load datasets as if the User has submitted them
 def load_datasets():
@@ -101,68 +105,33 @@ def load_decision_tree():
         tree = yaml.safe_load(file)
     return tree
 
-# Simulate sending insights and decision tree to Mistral LLM
-def send_to_mistral(insights, decision_tree):
-    """
-    Simulate sending insights and decision tree to Mistral.
-    In a real implementation, this would make an API call to Mistral.
-    """
-    print("Sending insights and decision tree to Mistral LLM...")
-    print(f"Insights length: {len(insights)} characters")
-    print(f"Decision tree has {len(decision_tree['form_questions'])} questions")
-    
-    # Simulate processing time
-    time.sleep(2)
-    
-    # For the prototype, extract actions from the form answers
-    # In a real implementation, Mistral would return these actions based on insights and decision tree
-    actions = []
-    
-    # Parse form_answers to get responses
-    responses = {}
-    for line in form_answers.strip().split('\n'):
-        if ':' in line:
-            key, value = line.split(':', 1)
-            key = key.strip()
-            value = value.strip().rstrip(',')
-            if value.lower() == 'true':
-                responses[key] = True
-            elif value.lower() == 'false':
-                responses[key] = False
-            elif value.startswith('[') and value.endswith(']'):
-                # Parse array
-                values = value[1:-1].split(',')
-                responses[key] = [v.strip().strip('"\'') for v in values]
-            else:
-                try:
-                    responses[key] = int(value)
-                except ValueError:
-                    responses[key] = value.strip('"\'')
-    
-    # Apply decision tree logic to get actions
-    for rule in decision_tree['decision_tree']:
-        condition = rule['if']
-        # Parse the condition
-        var_name, operator, expected_value = condition.split()
+# Sending insights and decision tree to Mistral LLM
+def send_to_mistral(insights, decision_tree, mistral_api_key):
+    """Send insights and decision tree to Mistral LLM.
+
+    Args:
+        insights (str): Insights from the data
+        decision_tree (dict): Decision tree from the YAML file
         
-        # Check if the condition is met
-        if var_name in responses:
-            actual_value = responses[var_name]
-            condition_met = False
-            
-            if operator == '==':
-                condition_met = actual_value == expected_value
-            elif operator == '!=':
-                condition_met = actual_value != expected_value
-            
-            if condition_met and 'then' in rule and 'actions' in rule['then']:
-                actions.extend(rule['then']['actions'])
+    Returns:
+        int: ID of the Leaf Node in the Decision Tree
+    """
+
     
-    print(f"Mistral determined {len(actions)} actions to take:")
-    for action in actions:
-        print(f"  - {action}")
-    
-    return actions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Generate notebook cells based on the actions from Mistral
 def generate_notebook_cells(df1, df2, actions):
