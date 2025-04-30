@@ -105,7 +105,7 @@ def load_decision_tree():
     return tree
 
 # Sending insights and decision tree to Mistral LLM
-def send_to_mistral(insights, decision_tree, mistral_api_key):
+def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
     """Send insights and decision tree to Mistral LLM.
 
     Args:
@@ -157,10 +157,18 @@ def send_to_mistral(insights, decision_tree, mistral_api_key):
         
         print("Sending request to Mistral API...")
         
-        # Send the request to Mistral API
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()  # Raise an exception for 4XX/5XX responses
-        
+        if not simulate:
+            # Send the request to Mistral API
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()  # Raise an exception for 4XX/5XX responses
+            print('response', response)
+        else : 
+            response = {
+                "choices": [
+                    {"message": {"content": "2"}}
+                ]
+            }
+            
         # Parse the response
         result = response.json()
         leaf_id_response = result["choices"][0]["message"]["content"].strip()
@@ -217,6 +225,22 @@ def get_cells_for_leaf_id(decision_tree, leaf_id):
     
     if leaf_node:
         print(leaf_node)  # Debug - afficher le nœud trouvé
+        
+        # Si le nœud contient des arguments, les extraire du formulaire
+        if 'arguments' in leaf_node and leaf_node['arguments']:
+            # Récupérer les valeurs des arguments depuis le formulaire
+            import re
+            for arg in leaf_node['arguments']:
+                # Chercher la valeur de l'argument dans le formulaire
+                pattern = f"{arg}: \"([^\"]+)\""
+                match = re.search(pattern, form_answers)
+                if match:
+                    # Ajouter l'argument et sa valeur au nœud feuille
+                    value = match.group(1)
+                    if 'arg_values' not in leaf_node:
+                        leaf_node['arg_values'] = {}
+                    leaf_node['arg_values'][arg] = value
+        
         return leaf_node
     else:
         print(f"Leaf node with ID {leaf_id} not found in the decision tree.")
@@ -224,6 +248,7 @@ def get_cells_for_leaf_id(decision_tree, leaf_id):
         return {
             'leaf_id': leaf_id,
             'cell_title': 'Default Analysis',
+            'arguments': [],
             'cell_content': '# Analyse par défaut\nprint("Aucun nœud correspondant trouvé dans l\'arbre de décision.")\nprint("Affichage des premières lignes des datasets:")\nprint("\\ndf1:")\nprint(df1.head())\nprint("\\ndf2:")\nprint(df2.head())'
         }
 
@@ -240,7 +265,7 @@ def generate_notebook_cells(df1, df2, actions):
     """
     cells = []
     
-    # Extraire common_id_column du formulaire
+    # Extraire common_id_column du formulaire - méthode de secours au cas où les arguments ne sont pas définis
     import re
     common_id_match = re.search(r'common_id_column: "([^"]+)"', form_answers)
     common_id_column = common_id_match.group(1) if common_id_match else 'ID'
@@ -263,19 +288,40 @@ warnings.filterwarnings('ignore')
 """)
     cells.append(imports_cell)
     
-    # Ajouter une cellule pour charger les données et définir common_id_column
-    load_data_cell = new_code_cell(f"""
+    # Créer une cellule qui définit tous les arguments nécessaires
+    arg_definitions = []
+    
+    # Si le nœud feuille contient des valeurs d'arguments, les utiliser
+    if actions and 'arg_values' in actions:
+        for arg_name, arg_value in actions['arg_values'].items():
+            arg_definitions.append(f"{arg_name} = '{arg_value}'")
+    else:
+        # Sinon, utiliser la méthode de secours
+        arg_definitions.append(f"common_id_column = '{common_id_column}'")
+    
+    # Ajouter une cellule pour charger les données et définir les arguments
+    load_data_cell_content = """
 # Chargement des données
 df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
 df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
 
-# Définir la colonne d'ID commune
-common_id_column = "{common_id_column}"
-
+"""
+    
+    # Ajouter les définitions d'arguments à la cellule
+    if arg_definitions:
+        load_data_cell_content += "# Définition des arguments\n"
+        load_data_cell_content += "\n".join(arg_definitions) + "\n\n"
+    
+    load_data_cell_content += """
 print("df1 shape:", df1.shape)
 print("df2 shape:", df2.shape)
-print(f"Colonne ID commune: {{common_id_column}}")
-""")
+"""
+    
+    # Ajouter des informations sur les arguments
+    if 'common_id_column' in load_data_cell_content:
+        load_data_cell_content += "print(f\"Colonne ID commune: {common_id_column}\")\n"
+    
+    load_data_cell = new_code_cell(load_data_cell_content)
     cells.append(load_data_cell)
     
     # Ajouter la cellule correspondant au leaf_id identifié
@@ -416,17 +462,17 @@ def main():
     # Get insights and form answers
     print("Extracting insights from data...")
     insights = get_insights_and_answers(df1, df2)
-    print(insights)
+    print('insights', insights)
     
     # Load decision tree
     print("Loading decision tree...")
     decision_tree = load_decision_tree()
-    print(decision_tree)
+    print('decision_tree', decision_tree)
     
     # Send to Mistral (simulated)
     print("Consulting Mistral LLM for notebook generation decisions...")
-    actions = send_to_mistral(insights, decision_tree, mistral_api_key)
-    print(actions)
+    actions = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False)
+    print('actions', actions)
 
     # Generate notebook cells
     print("Generating notebook cells based on Mistral's decisions...")

@@ -7,6 +7,7 @@ decision_tree:
             actions:
               - leaf_id: 1
                 cell_title: "Process Single Table"
+                arguments: []
                 cell_content: |
                   # Process a single table
                   print("Processing a single table...")
@@ -34,6 +35,7 @@ decision_tree:
                         actions:
                           - leaf_id: 2
                             cell_title: "Merge CSVs with Common ID"
+                            arguments: ["common_id_column"]
                             cell_content: |
                               # Merge multiple CSV files on a common ID column
                               print(f"Merging datasets on column: {common_id_column}")
@@ -60,6 +62,7 @@ decision_tree:
                         actions:
                           - leaf_id: 3
                             cell_title: "Handle CSVs That Cannot Be Joined"
+                            arguments: []
                             cell_content: |
                               # Handle CSV files that cannot be joined
                               print("Processing multiple CSV files that cannot be joined...")
@@ -81,6 +84,7 @@ decision_tree:
                   actions:
                     - leaf_id: 4
                       cell_title: "Process Excel with Multiple Sheets"
+                      arguments: []
                       cell_content: |
                         # Process Excel file with multiple sheets
                         print("Processing Excel file with multiple sheets...")
@@ -109,6 +113,7 @@ decision_tree:
       actions:
         - leaf_id: 5
           cell_title: "Process Images and Tabular Data"
+          arguments: []
           cell_content: |
             # Process both images and tabular data
             print("Processing a combined dataset of images and tabular data...")
@@ -141,6 +146,7 @@ decision_tree:
       actions:
         - leaf_id: 6
           cell_title: "Process Images Only"
+          arguments: []
           cell_content: |
             # Process image data only
             print("Processing image dataset...")
