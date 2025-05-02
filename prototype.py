@@ -100,7 +100,7 @@ def get_insights_and_answers(df1, df2):
 # Load the decision tree from YAML
 def load_decision_tree():
     """Load the decision tree from YAML file."""
-    with open('decision_tree.yaml', 'r') as file:
+    with open('decision_tree_preprocessing.yaml', 'r') as file:
         tree = yaml.safe_load(file)
     return tree
 
@@ -164,6 +164,7 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
             
             # Parse the response
             result = response.json()
+            print('result', result)
         else : 
             result = {'id': 'c19deca4e9a940fdb562e45be3a70163', 'object': 'chat.completion', 'created': 1746017866, 'model': 'mistral-large-latest', 'choices': [{'index': 0, 'message': {'role': 'assistant', 'tool_calls': None, 'content': '2'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 3645, 'total_tokens': 3648, 'completion_tokens': 3}}
         
@@ -263,7 +264,7 @@ def generate_notebook_cells(df1, df2, actions):
     
     # Importer les cellules additionnelles depuis le fichier external_cells.py
     try:
-        from external_cells import get_intro_cells, get_analysis_cells, get_conclusion_cells
+        from external_cells import get_intro_cells, get_conclusion_cells
         
         # Ajouter les cellules d'introduction (markdown d'intro + imports)
         cells.extend(get_intro_cells())
@@ -322,10 +323,6 @@ print("df2 shape:", df2.shape)
             else:
                 # Pour la rétrocompatibilité, si cell_content est une chaîne
                 cells.append(new_code_cell(actions['cell_content']))
-        
-        # Ajouter des cellules d'analyse supplémentaires selon le type de données
-        analysis_cells = get_analysis_cells(df1, df2)
-        cells.extend(analysis_cells)
         
         # Ajouter une cellule de conclusion
         cells.extend(get_conclusion_cells())
@@ -406,7 +403,14 @@ def create_and_execute_notebook(cells):
         
         # Définir le nom du fichier de sortie
         timestamp = time.strftime("%Hh-%Mm-%Ss")
-        output_filename = f"Output/generated_notebook_{timestamp}.ipynb"
+        output_dir = "Output"
+        
+        # Vérifier si le répertoire Output existe, sinon le créer
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            print(f"Répertoire '{output_dir}' créé")
+            
+        output_filename = f"{output_dir}/generated_notebook_{timestamp}.ipynb"
         
         # Sauvegarder le notebook
         with open(output_filename, 'w', encoding='utf-8') as f:
@@ -426,7 +430,7 @@ def create_and_execute_notebook(cells):
             executed_nb = client.execute()
             
             # Sauvegarder le notebook exécuté
-            executed_filename = f"Output/executed_notebook_{timestamp}.ipynb"
+            executed_filename = f"{output_dir}/executed_notebook_{timestamp}.ipynb"
             with open(executed_filename, 'w', encoding='utf-8') as f:
                 nbformat.write(executed_nb, f)
             
@@ -464,7 +468,7 @@ def main():
     
     # Send to Mistral (simulated)
     print("Consulting Mistral LLM for notebook generation decisions...")
-    actions = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=True)
+    actions = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False)
     print('actions', actions)
 
     # Generate notebook cells

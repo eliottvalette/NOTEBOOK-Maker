@@ -1,0 +1,122 @@
+decision_tree_preprocessing:
+  - if: data_type == "Tabular data only"
+    then:
+      actions:
+        - if: table_count == "One table"
+          then:
+            actions:
+              - if: table_format == "CSV"
+                then:
+                  actions:
+                    - leaf_id: 1
+                      cell_title: "Process Single Table"
+                      arguments: ['csv_filename']
+                      cell_content:
+                      - type: "code"
+                        content: |
+                          # Load the dataset
+                          df = pd.read_csv(csv_filename)
+                          
+                          # Display basic information
+                          print("Table shape:", df.shape)
+                          print("Column names:", df.columns.tolist())
+                          df.head()
+              - if: table_format == "Excel"
+                then:
+                  actions:
+                    - leaf_id: 2
+                      cell_title: "Process Excel Table"
+                      arguments: ['excel_filename']
+                      cell_content:
+                        - type: "code"
+                          content: |
+                            # Load the dataset
+                            df = pd.read_excel(excel_filename)
+
+                            # Display basic information
+                            print("Table shape:", df.shape)
+                            print("Column names:", df.columns.tolist())
+                            df.head()
+                            
+        - if: table_count == "Multiple tables"
+          then:
+            actions:
+              - if: multiple_tables_format == "CSV"
+                then:
+                  actions:
+                    - if: csv_join_possibility == "All can be joined on a common ID column"
+                      then:
+                        actions:
+                          - leaf_id: 3
+                            cell_title: "Merge CSVs with Common ID"
+                            arguments: ["csv_filenames_list", "common_id_column"]
+                            cell_content: 
+                              - type: "code"
+                                content: |
+                                  # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
+                                  dataframes = {}
+
+                                  for csv_filename in csv_filenames_list:
+                                      dataframes[csv_filename] = pd.read_csv(csv_filename)
+                                      print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
+                                      print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
+                                  
+                                  # Afficher la liste des DataFrames chargés
+                                  list(dataframes.keys())
+                              - type: "code"
+                                content: |
+                                  # Fusionner tous les DataFrames sur la colonne d'ID commune
+                                  merged_df = None
+                                  
+                                  for df_name, df in dataframes.items():
+                                      if common_id_column not in df.columns:
+                                          print(f"Attention: La colonne '{common_id_column}' n'est pas présente dans {df_name}")
+                                          continue
+                                          
+                                      if merged_df is None:
+                                          merged_df = df.copy()
+                                      else:
+                                          # Utiliser un suffixe pour éviter la duplication des noms de colonnes
+                                          merged_df = pd.merge(merged_df, df, on=common_id_column, how='outer', 
+                                                               suffixes=('', f'_{df_name}'))
+                                  
+                                  # Afficher des informations sur le DataFrame fusionné
+                                  print("Shape du DataFrame final:", merged_df.shape)
+                                  print("Colonnes du DataFrame final:", merged_df.columns.tolist())
+                                  merged_df.head()
+
+                                  # Standardize merged df
+                                  df = merged_df
+                    - if: csv_join_possibility == "Cannot be joined"
+                      then:
+                        actions:
+                          - leaf_id: 4
+                            cell_title: "Handle CSVs That Cannot Be Joined (Not supported yet)"
+                            arguments: []
+                            cell_content: 
+                              - type : "markdown"
+                                content: |
+                                  # Not supported Yet
+                              
+              - if: multiple_tables_format == "Excel with multiple sheets"
+                then:
+                  actions:
+                    - leaf_id: 5
+                      cell_title: "Process Excel with Multiple Sheets"
+                      arguments: []
+                      cell_content: 
+                        - type: "markdown"
+                          content: |
+                            # Not supported Yet
+
+  - if: data_type == "Images and tabular data"
+    then:
+      actions:
+        - leaf_id: 6
+          cell_title: "Not supported Yet"
+          arguments: []
+          cell_content:
+            - type: "markdown"
+              content: |
+                # Not supported Yet
+                
