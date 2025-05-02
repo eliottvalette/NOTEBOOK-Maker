@@ -35,17 +35,25 @@ def load_datasets():
     return [df1, df2]
 
 # Simulate the User's answers to the questions
-form_answers = {
+form_answers_preprocessing = {
     'has_several_csvs': True,
     'number_of_csvs': 2,
     'csv_filenames_list': ['Datasets/Tabular/Test/dataset1_with_target.csv', 'Datasets/Tabular/Test/dataset2_features_only.csv'],
     'has_common_id': True,
     'common_id_column': "ID",
     'target_column': "YTarget",
-    'wants_binary_prediction': True,
-    'wants_gradboost': True,
-    'wants_classification_metrics': True,
-    'wants_regression_metrics': True,
+    'Multiclass classification': True,
+    'num_classes': 2,
+}
+
+form_answers_modelling = {
+    'common_id_column': "ID",
+    'target_column': "YTarget",
+    'Multiclass classification': True,
+    'num_classes': 2,
+    'wants_random_forest': True,
+    'wants_xgboost': True,
+    'wants_pytorch': True,
 }
 # Get insights from the data
 def get_insights(df, idx):
@@ -93,24 +101,28 @@ def get_insights_and_answers(df1, df2):
     insights += get_insights(df2, 2)
     insights += "\n"
     insights += "User's form answers:\n"
-    insights += str(form_answers)
+    insights += str(form_answers_preprocessing)
     return insights
 
 # Load the decision tree from YAML
 def load_decision_tree():
     """Load the decision tree from YAML file."""
     with open('decision_tree_preprocessing.yaml', 'r') as file:
-        tree = yaml.safe_load(file)
-    return tree
+        tree_preprocessing = yaml.safe_load(file)
+    with open('decision_tree_modelling.yaml', 'r') as file:
+        tree_modelling = yaml.safe_load(file)
+    return tree_preprocessing, tree_modelling
 
 # Sending insights and decision tree to Mistral LLM
-def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
+def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, form_type="preprocessing"):
     """Send insights and decision tree to Mistral LLM.
 
     Args:
         insights (str): Insights from the data
         decision_tree (dict): Decision tree from the YAML file
         mistral_api_key (str): API key for Mistral
+        simulate (bool): Whether to simulate the API call
+        form_type (str): Type of form to use ("preprocessing" or "modelling")
         
     Returns:
         list: Actions to perform based on the leaf node identified
@@ -165,7 +177,11 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
             result = response.json()
             leaf_id_response = result["choices"][0]["message"]["content"].strip()
         else : 
-            leaf_id_response = "3"  # Convertir en chaîne de caractères
+            # Simuler une réponse en fonction du type de formulaire
+            if form_type == "preprocessing":
+                leaf_id_response = "3"  # Convertir en chaîne de caractères
+            else:
+                leaf_id_response = "1"  # Pour le modelling
         
         # Extract the leaf_id (just the number)
         import re
@@ -176,10 +192,10 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
         else:
             print(f"Could not extract leaf_id from response: {leaf_id_response}")
             # Default to leaf_id 2 (merge datasets) if extraction fails
-            leaf_id = 2
+            leaf_id = 3 if form_type == "preprocessing" else 1
         
         # Get the actions for this leaf_id
-        cell_code = get_cells_for_leaf_id(decision_tree, leaf_id)
+        cell_code = get_cells_for_leaf_id(decision_tree, leaf_id, form_type)
         
         return cell_code
         
@@ -187,12 +203,13 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
         print(f"Error communicating with Mistral API: {str(e)}")
         raise e
 
-def get_cells_for_leaf_id(decision_tree, leaf_id):
+def get_cells_for_leaf_id(decision_tree, leaf_id, form_type="preprocessing"):
     """Find the actions corresponding to a specific leaf_id in the decision tree.
     
     Args:
         decision_tree (dict): The decision tree structure
         leaf_id (int): The ID of the leaf node
+        form_type (str): Type of form to use for arguments ("preprocessing" or "modelling")
         
     Returns:
         dict: The leaf node with cell_title and cell_content
@@ -219,6 +236,9 @@ def get_cells_for_leaf_id(decision_tree, leaf_id):
     
     if leaf_node:
         print(leaf_node)  # Debug - afficher le nœud trouvé
+        
+        # Sélectionner le formulaire approprié en fonction du type
+        form_answers = form_answers_preprocessing if form_type == "preprocessing" else form_answers_modelling
         
         # Si le nœud contient des arguments, les extraire du formulaire
         if 'arguments' in leaf_node and leaf_node['arguments']:
@@ -287,7 +307,7 @@ def format_notebook_cells(leaf):
         "sns.set(style='whitegrid')"
     )
     cells.append(imports_cell)
-    
+
     # Traiter chaque élément de contenu de cellule dans le nœud feuille
     cell_content = leaf.get('cell_content', [])
     
@@ -385,6 +405,82 @@ def create_and_execute_notebook(cells):
     except Exception as e:
         print(f"Erreur lors de la création du notebook: {str(e)}")
         return False
+    
+# Get insights for modelling
+def get_insights_for_modelling(insights):
+    """
+    Prépare les insights pour l'étape de modélisation.
+    Ajoute les réponses du formulaire de modélisation aux insights d'origine.
+    
+    Args:
+        insights (str): Insights d'origine avec les réponses du formulaire de prétraitement
+        
+    Returns:
+        str: Insights enrichis avec les réponses du formulaire de modélisation
+    """
+    # Garder les insights de base mais ajouter les réponses du formulaire de modélisation
+    insights_modelling = insights + "\n\nUser's form answers for modelling:\n"
+    insights_modelling += str(form_answers_modelling)
+    
+    return insights_modelling
+
+# Format cells for modelling
+def modelling_cells(leaf_modelling):
+    """
+    Formate les cellules pour l'étape de modélisation.
+    Cette fonction est séparée de la fonction format_notebook_cells
+    car elle doit ajouter les cellules de modélisation après les cellules de prétraitement.
+    
+    Args:
+        leaf_modelling (dict): Le nœud feuille pour la phase de modélisation
+        
+    Returns:
+        list: Liste des cellules de notebook pour la modélisation
+    """
+    cells = []
+    
+    # Ajouter un titre pour la section de modélisation
+    title = leaf_modelling.get('cell_title', 'Modélisation')
+    cells.append(new_markdown_cell(f"# {title}"))
+    
+    # Ajouter des cellules pour le contenu de modélisation
+    cell_content = leaf_modelling.get('cell_content', [])
+    
+    if not isinstance(cell_content, list):
+        # Si cell_content n'est pas une liste, le convertir en élément unique d'une liste
+        cell_content = [{'type': 'code', 'content': cell_content}]
+    
+    for cell in cell_content:
+        cell_type = cell.get('type', 'code')  # Par défaut, considérer comme une cellule de code
+        content = cell.get('content', '')
+        
+        # Remplacer les arguments dans le contenu avec leurs valeurs
+        if 'arg_values' in leaf_modelling:
+            for arg_name, arg_value in leaf_modelling['arg_values'].items():
+                # Format de substitution pour les différents types de valeurs
+                if isinstance(arg_value, list):
+                    # Pour les listes, utiliser la représentation Python
+                    arg_value_str = repr(arg_value)
+                elif isinstance(arg_value, bool):
+                    # Pour les booléens, utiliser True/False
+                    arg_value_str = str(arg_value)
+                elif isinstance(arg_value, (int, float)):
+                    # Pour les nombres, utiliser leur représentation directe
+                    arg_value_str = str(arg_value)
+                else:
+                    # Pour les chaînes, ajouter des guillemets sans échapper
+                    arg_value_str = str(arg_value)
+                
+                # Remplacer toutes les occurrences de l'argument dans le contenu en utilisant les délimiteurs $
+                content = content.replace(f"${arg_name}$", arg_value_str)
+        
+        # Créer la cellule appropriée selon le type
+        if cell_type.lower() == 'markdown':
+            cells.append(new_markdown_cell(content))
+        else:  # 'code' par défaut
+            cells.append(new_code_cell(content))
+    
+    return cells
 
 def main():
     """Main function orchestrating the pipeline."""
@@ -402,26 +498,47 @@ def main():
     
     # Load decision tree
     print("Loading decision tree...")
-    decision_tree = load_decision_tree()
-    print('decision_tree', decision_tree)
+    tree_preprocessing, tree_modelling = load_decision_tree()
+    print('decision_tree', tree_preprocessing)
     
-    # Send to Mistral (simulated)
-    print("Consulting Mistral LLM for notebook generation decisions...")
-    leaf = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=True)
+    # Send to Mistral for preprocessing decisions
+    print("Consulting Mistral LLM for preprocessing decisions...")
+    leaf = send_to_mistral(insights, tree_preprocessing, mistral_api_key, simulate=True, form_type="preprocessing")
     print('leaf', leaf)
 
-    # Formatting notebook cells
-    print("Formatting notebook cells based on Mistral's decisions...")
-    cells = format_notebook_cells(leaf)
+    # Formatting notebook cells for preprocessing
+    print("Formatting notebook cells based on Mistral's preprocessing decisions...")
+    preprocessing_cells = format_notebook_cells(leaf)
+    print('preprocessing_cells', preprocessing_cells)
+ 
+    # Get New insights for Modelling
+    print("Getting new insights for Modelling...")
+    insights_modelling = get_insights_for_modelling(insights)
+    print('insights_modelling', insights_modelling)
+
+    # New call to Mistral for Modelling
+    print("Consulting Mistral LLM for Modelling decisions...")
+    leaf_modelling = send_to_mistral(insights_modelling, tree_modelling, mistral_api_key, simulate=True, form_type="modelling")
+    print('leaf_modelling', leaf_modelling)
+
+    # Add cells for Modelling
+    print("Creating cells for Modelling...")
+    model_cells = modelling_cells(leaf_modelling)
+    print('model_cells', model_cells)
+    
+    # Combine all cells
+    print("Combining preprocessing and modelling cells...")
+    all_cells = preprocessing_cells + model_cells
     
     # Create and execute notebook
     print("Creating and executing notebook...")
-    success = create_and_execute_notebook(cells)
+    success = create_and_execute_notebook(all_cells)
     
     if success:
         print("Pipeline completed successfully!")
     else:
         print("Pipeline completed with errors.")
+
 
 if __name__ == "__main__":
     main()

@@ -8,10 +8,40 @@ decision_tree_modelling:
               - leaf_id: 1
                 cell_title: "Random Forest"
                 arguments: ['num_classes', 'target_column']
-                cell_content:
+                cell_content: 
                   - type: "code"
                     content: |
-                      # TODO: Implement Random Forest
+                      import xgboost as xgb
+                      import torch
+                      import torch.nn as nn
+                      import torch.optim as optim
+                      from sklearn.model_selection import train_test_split
+                      from sklearn.metrics import accuracy_score
+                      
+                  - type: "code" # the df is already loaded and named df
+                    content: |
+                      target_column = "$target_column$"
+                      num_classes = $num_classes$
+
+                      X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=[target_column]), df[target_column], test_size=0.2, random_state=42)
+
+                      # Create DMatrix for XGBoost
+                      dtrain = xgb.DMatrix(X_train, label=y_train)
+                      dtest = xgb.DMatrix(X_test, label=y_test)
+
+                      # Set parameters for XGBoost
+                      params = {
+                          'objective': 'multi:softmax',
+                          'num_class': num_classes,
+                          'max_depth': 6,
+                          'eta': 0.3,
+                          'eval_metric': 'mlogloss'
+                      }
+
+                      # Train the model
+                      num_rounds = 100
+                      model = xgb.train(params, dtrain, num_rounds)
+                  
         - if: Regression
           then:
             actions:
@@ -19,7 +49,11 @@ decision_tree_modelling:
                 cell_title: "Neural Network"
                 arguments: ['target_column']
                 cell_content:
-                  # TODO: Implement Neural Network
+                  - type: "code"
+                    content: |
+                      # Regression with Neural Network
+                      target_column = "$target_column$"
+                      # TODO: Implement Neural Network
         - if : Time series forecasting
           then:
             actions:
@@ -27,7 +61,11 @@ decision_tree_modelling:
                 cell_title: "LSTM"
                 arguments: ['target_column']
                 cell_content:
-                 # TODO: Implement LSTM
+                  - type: "code"
+                    content: |
+                      # Time Series Forecasting with LSTM
+                      target_column = "$target_column$"
+                      # TODO: Implement LSTM
   - if: "No tabular data"
     then:
       actions:

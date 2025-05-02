@@ -87,7 +87,6 @@ decision_tree_preprocessing:
                                   print("Shape du DataFrame final:", df.shape)
                                   print("Colonnes du DataFrame final:", df.columns.tolist())
                                   df.head()
-
                                   
                     - if: csv_join_possibility == "Cannot be joined"
                       then:
