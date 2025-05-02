@@ -35,19 +35,18 @@ def load_datasets():
     return [df1, df2]
 
 # Simulate the User's answers to the questions
-form_answers = """
-has_several_csvs: True,
-number_of_csvs: 2,
-csv_filenames_list: ["dataset1_with_target.csv", "dataset2_features_only.csv"],
-has_common_id: True,
-common_id_column: "ID",
-target_column: "YTarget",
-wants_binary_prediction: True,
-wants_gradboost: True,
-wants_classification_metrics: True,
-wants_regression_metrics: True,
-"""
-
+form_answers = {
+    'has_several_csvs': True,
+    'number_of_csvs': 2,
+    'csv_filenames_list': ['Datasets/Tabular/Test/dataset1_with_target.csv', 'Datasets/Tabular/Test/dataset2_features_only.csv'],
+    'has_common_id': True,
+    'common_id_column': "ID",
+    'target_column': "YTarget",
+    'wants_binary_prediction': True,
+    'wants_gradboost': True,
+    'wants_classification_metrics': True,
+    'wants_regression_metrics': True,
+}
 # Get insights from the data
 def get_insights(df, idx):
     """Get insights from the data."""
@@ -94,7 +93,7 @@ def get_insights_and_answers(df1, df2):
     insights += get_insights(df2, 2)
     insights += "\n"
     insights += "User's form answers:\n"
-    insights += form_answers
+    insights += str(form_answers)
     return insights
 
 # Load the decision tree from YAML
@@ -224,17 +223,21 @@ def get_cells_for_leaf_id(decision_tree, leaf_id):
         # Si le nœud contient des arguments, les extraire du formulaire
         if 'arguments' in leaf_node and leaf_node['arguments']:
             # Récupérer les valeurs des arguments depuis le formulaire
-            import re
             for arg in leaf_node['arguments']:
-                # Chercher la valeur de l'argument dans le formulaire
-                pattern = f"{arg}: \"([^\"]+)\""
-                match = re.search(pattern, form_answers)
-                if match:
-                    # Ajouter l'argument et sa valeur au nœud feuille
-                    value = match.group(1)
-                    if 'arg_values' not in leaf_node:
-                        leaf_node['arg_values'] = {}
-                    leaf_node['arg_values'][arg] = value
+                # Extraire les valeurs des arguments du formulaire
+                try:
+                    # Accéder directement à la valeur dans le dictionnaire form_answers
+                    if arg in form_answers:
+                        value = form_answers[arg]
+                        
+                        # Stocker la valeur de l'argument
+                        if 'arg_values' not in leaf_node:
+                            leaf_node['arg_values'] = {}
+                        leaf_node['arg_values'][arg] = value
+                    else:
+                        print(f"Avertissement: L'argument '{arg}' n'a pas été trouvé dans les réponses du formulaire.")
+                except Exception as e:
+                    print(f"Erreur lors de l'extraction de l'argument {arg}: {str(e)}")
         
         return leaf_node
     else:
@@ -244,8 +247,112 @@ def get_cells_for_leaf_id(decision_tree, leaf_id):
             'leaf_id': leaf_id,
             'cell_title': 'Default Analysis',
             'arguments': [],
-            'cell_content': '# Analyse par défaut\nprint("Aucun nœud correspondant trouvé dans l\'arbre de décision.")\nprint("Affichage des premières lignes des datasets:")\nprint("\\ndf1:")\nprint(df1.head())\nprint("\\ndf2:")\nprint(df2.head())'
+            'cell_content': [
+                {
+                    'type': 'markdown',
+                    'content': '# Analyse par défaut\nAucun nœud correspondant trouvé dans l\'arbre de décision.'
+                },
+                {
+                    'type': 'code',
+                    'content': 'print("Affichage des premières lignes des datasets:")\nprint("\\ndf1:")\nprint(df1.head())\nprint("\\ndf2:")\nprint(df2.head())'
+                }
+            ]
         }
+
+def format_notebook_cells(leaf):
+    """Format leaf information into notebook cells.
+    
+    Args:
+        leaf (dict): Leaf node from the decision tree
+    
+    Returns:
+        list: List of nbformat cells ready to be added to a notebook
+    """
+    cells = []
+    
+    # Ajouter un titre au notebook
+    title = leaf.get('cell_title', 'Analyse automatique')
+    cells.append(new_markdown_cell(f"# {title}"))
+    
+    # Ajouter l'importation des bibliothèques standard
+    imports_cell = new_code_cell(
+        "# Importation des bibliothèques nécessaires\n"
+        "import pandas as pd\n"
+        "import numpy as np\n"
+        "import matplotlib.pyplot as plt\n"
+        "import seaborn as sns\n\n"
+        "# Configuration pour afficher les graphiques dans le notebook\n"
+        "%matplotlib inline\n"
+        "plt.style.use('ggplot')\n"
+        "sns.set(style='whitegrid')"
+    )
+    cells.append(imports_cell)
+    
+    # Ajouter une cellule pour initialiser les variables d'arguments
+    if 'arg_values' in leaf:
+        init_args_code = "# Initialisation des variables nécessaires\n"
+        for arg_name, arg_value in leaf['arg_values'].items():
+            if isinstance(arg_value, list):
+                # Pour les listes, utiliser la représentation Python
+                arg_value_str = repr(arg_value)
+            elif isinstance(arg_value, bool):
+                # Pour les booléens, utiliser True/False
+                arg_value_str = str(arg_value)
+            elif isinstance(arg_value, (int, float)):
+                # Pour les nombres, utiliser leur représentation directe
+                arg_value_str = str(arg_value)
+            else:
+                # Pour les chaînes, ajouter des guillemets
+                arg_value_str = f'"{arg_value}"'
+                
+            init_args_code += f"{arg_name} = {arg_value_str}\n"
+        
+        # Ajouter une cellule pour charger les datasets
+        if 'csv_filenames_list' in leaf['arg_values']:
+            init_args_code += "\n# Chargement des datasets\n"
+            init_args_code += "df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')\n"
+            init_args_code += "df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')\n"
+            
+        cells.append(new_code_cell(init_args_code))
+    
+    # Traiter chaque élément de contenu de cellule dans le nœud feuille
+    cell_content = leaf.get('cell_content', [])
+    
+    if not isinstance(cell_content, list):
+        # Si cell_content n'est pas une liste, le convertir en élément unique d'une liste
+        cell_content = [{'type': 'code', 'content': cell_content}]
+    
+    for cell in cell_content:
+        cell_type = cell.get('type', 'code')  # Par défaut, considérer comme une cellule de code
+        content = cell.get('content', '')
+        
+        # Remplacer les arguments dans le contenu avec leurs valeurs
+        if 'arg_values' in leaf:
+            for arg_name, arg_value in leaf['arg_values'].items():
+                # Format de substitution pour les différents types de valeurs
+                if isinstance(arg_value, list):
+                    # Pour les listes, utiliser la représentation Python
+                    arg_value_str = repr(arg_value)
+                elif isinstance(arg_value, bool):
+                    # Pour les booléens, utiliser True/False
+                    arg_value_str = str(arg_value)
+                elif isinstance(arg_value, (int, float)):
+                    # Pour les nombres, utiliser leur représentation directe
+                    arg_value_str = str(arg_value)
+                else:
+                    # Pour les chaînes, ajouter des guillemets
+                    arg_value_str = f'"{arg_value}"'
+                
+                # Remplacer toutes les occurrences de l'argument dans le contenu
+                content = content.replace(arg_name, arg_value_str)
+        
+        # Créer la cellule appropriée selon le type
+        if cell_type.lower() == 'markdown':
+            cells.append(new_markdown_cell(content))
+        else:  # 'code' par défaut
+            cells.append(new_code_cell(content))
+    
+    return cells
 
 def create_and_execute_notebook(cells):
     """Create and execute a notebook with the given cells.
@@ -327,12 +434,12 @@ def main():
     
     # Send to Mistral (simulated)
     print("Consulting Mistral LLM for notebook generation decisions...")
-    actions = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=True)
-    print('actions', actions)
+    leaf = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=True)
+    print('leaf', leaf)
 
-    # Generate notebook cells
-    print("Generating notebook cells based on Mistral's decisions...")
-    cells = generate_notebook_cells(df1, df2, actions)
+    # Formatting notebook cells
+    print("Formatting notebook cells based on Mistral's decisions...")
+    cells = format_notebook_cells(leaf)
     
     # Create and execute notebook
     print("Creating and executing notebook...")
