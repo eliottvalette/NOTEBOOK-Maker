@@ -288,33 +288,6 @@ def format_notebook_cells(leaf):
     )
     cells.append(imports_cell)
     
-    # Ajouter une cellule pour initialiser les variables d'arguments
-    if 'arg_values' in leaf:
-        init_args_code = "# Initialisation des variables nécessaires\n"
-        for arg_name, arg_value in leaf['arg_values'].items():
-            if isinstance(arg_value, list):
-                # Pour les listes, utiliser la représentation Python
-                arg_value_str = repr(arg_value)
-            elif isinstance(arg_value, bool):
-                # Pour les booléens, utiliser True/False
-                arg_value_str = str(arg_value)
-            elif isinstance(arg_value, (int, float)):
-                # Pour les nombres, utiliser leur représentation directe
-                arg_value_str = str(arg_value)
-            else:
-                # Pour les chaînes, ajouter des guillemets
-                arg_value_str = f'"{arg_value}"'
-                
-            init_args_code += f"{arg_name} = {arg_value_str}\n"
-        
-        # Ajouter une cellule pour charger les datasets
-        if 'csv_filenames_list' in leaf['arg_values']:
-            init_args_code += "\n# Chargement des datasets\n"
-            init_args_code += "df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')\n"
-            init_args_code += "df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')\n"
-            
-        cells.append(new_code_cell(init_args_code))
-    
     # Traiter chaque élément de contenu de cellule dans le nœud feuille
     cell_content = leaf.get('cell_content', [])
     
@@ -340,11 +313,11 @@ def format_notebook_cells(leaf):
                     # Pour les nombres, utiliser leur représentation directe
                     arg_value_str = str(arg_value)
                 else:
-                    # Pour les chaînes, ajouter des guillemets
-                    arg_value_str = f'"{arg_value}"'
+                    # Pour les chaînes, ajouter des guillemets sans échapper
+                    arg_value_str = str(arg_value)
                 
-                # Remplacer toutes les occurrences de l'argument dans le contenu
-                content = content.replace(arg_name, arg_value_str)
+                # Remplacer toutes les occurrences de l'argument dans le contenu en utilisant les délimiteurs $
+                content = content.replace(f"${arg_name}$", arg_value_str)
         
         # Créer la cellule appropriée selon le type
         if cell_type.lower() == 'markdown':

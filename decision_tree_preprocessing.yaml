@@ -15,12 +15,13 @@ decision_tree_preprocessing:
                       - type: "code"
                         content: |
                           # Load the dataset
-                          df = pd.read_csv(csv_filename)
+                          df = pd.read_csv($csv_filename$)
                           
                           # Display basic information
                           print("Table shape:", df.shape)
                           print("Column names:", df.columns.tolist())
                           df.head()
+
               - if: table_format == "Excel"
                 then:
                   actions:
@@ -31,7 +32,7 @@ decision_tree_preprocessing:
                         - type: "code"
                           content: |
                             # Load the dataset
-                            df = pd.read_excel(excel_filename)
+                            df = pd.read_excel($excel_filename$)
 
                             # Display basic information
                             print("Table shape:", df.shape)
@@ -56,7 +57,7 @@ decision_tree_preprocessing:
                                   # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
                                   dataframes = {}
 
-                                  for csv_filename in csv_filenames_list:
+                                  for csv_filename in $csv_filenames_list$:
                                       dataframes[csv_filename] = pd.read_csv(csv_filename)
                                       print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
                                       print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
@@ -69,24 +70,25 @@ decision_tree_preprocessing:
                                   merged_df = None
                                   
                                   for df_name, df in dataframes.items():
-                                      if common_id_column not in df.columns:
-                                          print(f"Attention: La colonne '{common_id_column}' n'est pas présente dans {df_name}")
+                                      if "$common_id_column$" not in df.columns:
+                                          print(f"Attention: La colonne '$common_id_column$' n'est pas présente dans {df_name}")
                                           continue
                                           
                                       if merged_df is None:
                                           merged_df = df.copy()
                                       else:
                                           # Utiliser un suffixe pour éviter la duplication des noms de colonnes
-                                          merged_df = pd.merge(merged_df, df, on=common_id_column, how='outer', 
+                                          merged_df = pd.merge(merged_df, df, on="$common_id_column$", how='outer', 
                                                                suffixes=('', f'_{df_name}'))
-                                  
-                                  # Afficher des informations sur le DataFrame fusionné
-                                  print("Shape du DataFrame final:", merged_df.shape)
-                                  print("Colonnes du DataFrame final:", merged_df.columns.tolist())
-                                  merged_df.head()
-
                                   # Standardize merged df
                                   df = merged_df
+
+                                  # Afficher des informations sur le DataFrame fusionné
+                                  print("Shape du DataFrame final:", df.shape)
+                                  print("Colonnes du DataFrame final:", df.columns.tolist())
+                                  df.head()
+
+                                  
                     - if: csv_join_possibility == "Cannot be joined"
                       then:
                         actions:
