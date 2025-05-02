@@ -38,7 +38,7 @@ def load_datasets():
 form_answers = """
 has_several_csvs: True,
 number_of_csvs: 2,
-csv_names: ["dataset1_with_target.csv", "dataset2_features_only.csv"],
+csv_filenames_list: ["dataset1_with_target.csv", "dataset2_features_only.csv"],
 has_common_id: True,
 common_id_column: "ID",
 target_column: "YTarget",
@@ -164,11 +164,9 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False):
             
             # Parse the response
             result = response.json()
-            print('result', result)
+            leaf_id_response = result["choices"][0]["message"]["content"].strip()
         else : 
-            result = {'id': 'c19deca4e9a940fdb562e45be3a70163', 'object': 'chat.completion', 'created': 1746017866, 'model': 'mistral-large-latest', 'choices': [{'index': 0, 'message': {'role': 'assistant', 'tool_calls': None, 'content': '2'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 3645, 'total_tokens': 3648, 'completion_tokens': 3}}
-        
-        leaf_id_response = result["choices"][0]["message"]["content"].strip()
+            leaf_id_response = "3"  # Convertir en chaîne de caractères
         
         # Extract the leaf_id (just the number)
         import re
@@ -249,145 +247,6 @@ def get_cells_for_leaf_id(decision_tree, leaf_id):
             'cell_content': '# Analyse par défaut\nprint("Aucun nœud correspondant trouvé dans l\'arbre de décision.")\nprint("Affichage des premières lignes des datasets:")\nprint("\\ndf1:")\nprint(df1.head())\nprint("\\ndf2:")\nprint(df2.head())'
         }
 
-def generate_notebook_cells(df1, df2, actions):
-    """Generate notebook cells based on actions.
-    
-    Args:
-        df1 (DataFrame): First dataset
-        df2 (DataFrame): Second dataset
-        actions (dict): Actions to perform
-        
-    Returns:
-        list: List of notebook cells
-    """
-    cells = []
-    
-    # Importer les cellules additionnelles depuis le fichier external_cells.py
-    try:
-        from external_cells import get_intro_cells, get_conclusion_cells
-        
-        # Ajouter les cellules d'introduction (markdown d'intro + imports)
-        cells.extend(get_intro_cells())
-        
-        # Créer une cellule qui définit tous les arguments nécessaires
-        arg_definitions = []
-        
-        # Si le nœud feuille contient des valeurs d'arguments, les utiliser
-        if actions and 'arg_values' in actions:
-            for arg_name, arg_value in actions['arg_values'].items():
-                arg_definitions.append(f"{arg_name} = '{arg_value}'")
-        else:
-            # Sinon, extraire common_id_column du formulaire comme méthode de secours
-            import re
-            common_id_match = re.search(r'common_id_column: "([^"]+)"', form_answers)
-            common_id_column = common_id_match.group(1) if common_id_match else 'ID'
-            arg_definitions.append(f"common_id_column = '{common_id_column}'")
-        
-        # Ajouter une cellule pour charger les données et définir les arguments
-        load_data_cell_content = """
-# Chargement des données
-df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
-df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
-
-"""
-        
-        # Ajouter les définitions d'arguments à la cellule
-        if arg_definitions:
-            load_data_cell_content += "# Définition des arguments\n"
-            load_data_cell_content += "\n".join(arg_definitions) + "\n\n"
-        
-        load_data_cell_content += """
-print("df1 shape:", df1.shape)
-print("df2 shape:", df2.shape)
-"""
-        
-        # Ajouter des informations sur les arguments
-        if 'common_id_column' in load_data_cell_content:
-            load_data_cell_content += "print(f\"Colonne ID commune: {common_id_column}\")\n"
-        
-        cells.append(new_code_cell(load_data_cell_content))
-        
-        # Ajouter la cellule correspondant au leaf_id identifié
-        if actions and 'cell_title' in actions and 'cell_content' in actions:
-            cells.append(new_markdown_cell(f"## {actions['cell_title']}"))
-            
-            # Traiter le contenu selon son format (chaîne ou liste)
-            if isinstance(actions['cell_content'], list):
-                # Si cell_content est une liste de cellules
-                for cell_item in actions['cell_content']:
-                    if cell_item.get('type') == 'markdown':
-                        cells.append(new_markdown_cell(cell_item.get('content', '')))
-                    elif cell_item.get('type') == 'code':
-                        cells.append(new_code_cell(cell_item.get('content', '')))
-                    # Ignore les types inconnus
-            else:
-                # Pour la rétrocompatibilité, si cell_content est une chaîne
-                cells.append(new_code_cell(actions['cell_content']))
-        
-        # Ajouter une cellule de conclusion
-        cells.extend(get_conclusion_cells())
-    
-    except ImportError:
-        print("Attention: Le fichier external_cells.py n'a pas été trouvé. Utilisation des cellules par défaut.")
-        # Code existant comme fallback
-        # Ajouter une cellule d'introduction
-        cells.append(new_markdown_cell("# Analyse de données automatisée\n\nCe notebook a été généré automatiquement en fonction des données fournies et des réponses au formulaire."))
-        
-        # Cellule d'imports
-        cells.append(new_code_cell("""
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import warnings
-warnings.filterwarnings('ignore')
-"""))
-        
-        # Définir les arguments
-        import re
-        common_id_match = re.search(r'common_id_column: "([^"]+)"', form_answers)
-        common_id_column = common_id_match.group(1) if common_id_match else 'ID'
-        
-        # Cellule de chargement des données
-        cells.append(new_code_cell(f"""
-# Chargement des données
-df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
-df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
-
-# Définition des arguments
-common_id_column = '{common_id_column}'
-
-print("df1 shape:", df1.shape)
-print("df2 shape:", df2.shape)
-print(f"Colonne ID commune: {{common_id_column}}")
-"""))
-        
-        # Ajouter la cellule correspondant au leaf_id identifié
-        if actions and 'cell_title' in actions and 'cell_content' in actions:
-            cells.append(new_markdown_cell(f"## {actions['cell_title']}"))
-            
-            # Traiter le contenu selon son format (chaîne ou liste)
-            if isinstance(actions['cell_content'], list):
-                # Si cell_content est une liste de cellules
-                for cell_item in actions['cell_content']:
-                    if cell_item.get('type') == 'markdown':
-                        cells.append(new_markdown_cell(cell_item.get('content', '')))
-                    elif cell_item.get('type') == 'code':
-                        cells.append(new_code_cell(cell_item.get('content', '')))
-                    # Ignore les types inconnus
-            else:
-                # Pour la rétrocompatibilité, si cell_content est une chaîne
-                cells.append(new_code_cell(actions['cell_content']))
-        
-        # Cellule de conclusion
-        cells.append(new_markdown_cell("## Conclusion\n\nCe notebook a automatiquement analysé vos données et créé un modèle de base. Vous pouvez maintenant explorer davantage les données et améliorer le modèle selon vos besoins."))
-    
-    return cells
-
 def create_and_execute_notebook(cells):
     """Create and execute a notebook with the given cells.
     
@@ -451,7 +310,7 @@ def main():
     """Main function orchestrating the pipeline."""
     print("Starting automated pipeline...")
     
-    # Load datasets
+    # Load datasets (For test purposes, in the real pipeine, the user will submit the datasets and the form answers but it can have different format and number)
     print("Loading datasets...")
     dfs = load_datasets()
     df1, df2 = dfs[0], dfs[1]
@@ -468,7 +327,7 @@ def main():
     
     # Send to Mistral (simulated)
     print("Consulting Mistral LLM for notebook generation decisions...")
-    actions = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False)
+    actions = send_to_mistral(insights, decision_tree, mistral_api_key, simulate=True)
     print('actions', actions)
 
     # Generate notebook cells
