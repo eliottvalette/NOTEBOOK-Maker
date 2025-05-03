@@ -15,7 +15,7 @@ decision_tree_preprocessing:
                       - type: "code"
                         content: |
                           # Load the dataset
-                          df = pd.read_csv($csv_filename$)
+                          df = pd.read_csv('$csv_filename$')
                           
                           # Display basic information
                           print("Table shape:", df.shape)
@@ -32,7 +32,7 @@ decision_tree_preprocessing:
                         - type: "code"
                           content: |
                             # Load the dataset
-                            df = pd.read_excel($excel_filename$)
+                            df = pd.read_excel('$excel_filename$')
 
                             # Display basic information
                             print("Table shape:", df.shape)

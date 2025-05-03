@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.datasets import make_classification, make_regression
 
 # Génération de datasets synthétiques
-def create_synthetic_datasets(n_samples=1000, n_features=10, random_state=42):
+def create_synthetic_datasets(n_samples=10000, n_features=10, random_state=42):
     """Crée deux datasets synthétiques avec une colonne ID commune."""
     # Générer des IDs uniques
     ids = np.arange(1, n_samples + 1)
@@ -48,7 +48,7 @@ def create_synthetic_datasets(n_samples=1000, n_features=10, random_state=42):
     
     return df1, df2
 
-def create_time_series_dataset(n_samples=1000, n_features=10, random_state=42):
+def create_time_series_dataset(n_samples=10000, n_features=10, random_state=42):
     """Crée un dataset de séries temporelles synthétiques."""
     # Générer des IDs uniques
     ids = np.arange(1, n_samples + 1)
