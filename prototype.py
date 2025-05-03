@@ -35,6 +35,8 @@ def load_datasets():
     return [df1, df2]
 
 # Simulate the User's answers to the questions
+'''
+TABULAR DATA ONLY AND BINARY PREDICTION
 form_answers_preprocessing = {
     'has_several_csvs': True,
     'number_of_csvs': 2,
@@ -55,6 +57,25 @@ form_answers_modelling = {
     'wants_xgboost': True,
     'wants_pytorch': True,
 }
+'''
+
+# TABULAR DATA ONLY AND TIME SERIES FORECASTING
+form_answers_preprocessing = {
+    'has_several_csvs': False,
+    'csv_filename': 'Datasets/Tabular/Time_series/dataset_time_series.csv',
+    'has_common_id': True,
+    'common_id_column': "ID",
+    'target_column': "Target",
+    'Multiclass classification': False,
+}
+
+form_answers_modelling = {
+    'common_id_column': "ID",
+    'target_column': "Target",
+    'Multiclass classification': False,
+    'wants_lstm': True,
+}
+
 # Get insights from the data
 def get_insights(df, idx):
     """Get insights from the data."""
@@ -179,9 +200,9 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, fo
         else : 
             # Simuler une réponse en fonction du type de formulaire
             if form_type == "preprocessing":
-                leaf_id_response = "3"  # Convertir en chaîne de caractères
+                leaf_id_response = "1"  # Convertir en chaîne de caractères
             else:
-                leaf_id_response = "2"  # Pour le modelling
+                leaf_id_response = "3"  # Pour le modelling
         
         # Extract the leaf_id (just the number)
         import re
@@ -192,7 +213,7 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, fo
         else:
             print(f"Could not extract leaf_id from response: {leaf_id_response}")
             # Default to leaf_id 2 (merge datasets) if extraction fails
-            leaf_id = 3 if form_type == "preprocessing" else 2
+            leaf_id = 1 if form_type == "preprocessing" else 3
         
         # Get the actions for this leaf_id
         cell_code = get_cells_for_leaf_id(decision_tree, leaf_id, form_type)

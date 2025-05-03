@@ -137,12 +137,68 @@ decision_tree_modelling:
                 cell_title: "LSTM"
                 arguments: ['target_column']
                 cell_content:
-                  - type: "code" 
+                  - type: "code"
                     content: |
-                      # Time Series Forecasting with LSTM
+                      # Import necessary libraries
+                      import torch
+                      import torch.nn as nn
+                      import torch.optim as optim
+                      from sklearn.model_selection import train_test_split
+
+                  - type: "code"
+                    content: |
                       target_column = "$target_column$"
 
-                      # TODO: Implement LSTM
+                      X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=[target_column]), df[target_column], test_size=0.2, random_state=42)
+
+                  - type: "code"
+                    content: |
+                      class LSTMModel(nn.Module):
+                          def __init__(self, input_size, hidden_size, output_size):
+                              super(LSTMModel, self).__init__()
+                              self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+                              self.fc = nn.Linear(hidden_size, output_size)
+
+                          def forward(self, x):
+                              lstm_out, _ = self.lstm(x)
+                              out = self.fc(lstm_out[:, -1, :])
+                              return out
+
+                  - type: "code"
+                    content: |
+                      # Initialize model, loss function and optimizer
+                      input_size = X_train.shape[1]
+                      hidden_size = 64
+                      output_size = 1
+                      model = LSTMModel(input_size, hidden_size, output_size)
+                      criterion = nn.MSELoss()
+                      optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+                  - type: "code"
+                    content: |
+                      # Training loop
+                      num_epochs = 100
+                      for epoch in range(num_epochs):
+                          # Forward pass
+                          outputs = model(X_train_tensor)
+                          loss = criterion(outputs, y_train_tensor)
+                          
+                          # Backward and optimize
+                          optimizer.zero_grad()
+                          loss.backward()
+                          optimizer.step()
+                          
+                          if (epoch+1) % 10 == 0:
+                              print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+                  - type: "code"
+                    content: |
+                      # Evaluate the model
+                      model.eval()
+                      with torch.no_grad():
+                          y_pred = model(X_test_tensor)
+                          test_loss = criterion(y_pred, y_test_tensor)
+                          print(f'Test Loss: {test_loss.item():.4f}')
 
   - if: "No tabular data"
     then:
