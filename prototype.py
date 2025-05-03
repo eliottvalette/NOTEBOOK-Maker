@@ -28,8 +28,8 @@ mistral_api_key = os.getenv('MISTRAL_API_KEY')
 # Load datasets as if the User has submitted them
 def load_datasets():
     """Load two datasets from CSV files."""
-    df1 = pd.read_csv('Datasets/Tabular/Test/dataset1_with_target.csv')
-    df2 = pd.read_csv('Datasets/Tabular/Test/dataset2_features_only.csv')
+    df1 = pd.read_csv('Datasets/Tabular/Binary_pred/dataset1_with_target.csv')
+    df2 = pd.read_csv('Datasets/Tabular/Binary_pred/dataset2_features_only.csv')
     print("Datasets loaded successfully.")
     
     return [df1, df2]
@@ -38,7 +38,7 @@ def load_datasets():
 form_answers_preprocessing = {
     'has_several_csvs': True,
     'number_of_csvs': 2,
-    'csv_filenames_list': ['Datasets/Tabular/Test/dataset1_with_target.csv', 'Datasets/Tabular/Test/dataset2_features_only.csv'],
+    'csv_filenames_list': ['Datasets/Tabular/Binary_pred/dataset1_with_target.csv', 'Datasets/Tabular/Binary_pred/dataset2_features_only.csv'],
     'has_common_id': True,
     'common_id_column': "ID",
     'target_column': "YTarget",
@@ -181,7 +181,7 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, fo
             if form_type == "preprocessing":
                 leaf_id_response = "3"  # Convertir en chaîne de caractères
             else:
-                leaf_id_response = "1"  # Pour le modelling
+                leaf_id_response = "2"  # Pour le modelling
         
         # Extract the leaf_id (just the number)
         import re
@@ -192,7 +192,7 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, fo
         else:
             print(f"Could not extract leaf_id from response: {leaf_id_response}")
             # Default to leaf_id 2 (merge datasets) if extraction fails
-            leaf_id = 3 if form_type == "preprocessing" else 1
+            leaf_id = 3 if form_type == "preprocessing" else 2
         
         # Get the actions for this leaf_id
         cell_code = get_cells_for_leaf_id(decision_tree, leaf_id, form_type)
