@@ -16,31 +16,46 @@ decision_tree_modelling:
                       import torch.nn as nn
                       import torch.optim as optim
                       from sklearn.model_selection import train_test_split
-                      from sklearn.metrics import accuracy_score
+                      from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+                      from sklearn.preprocessing import StandardScaler
+                      import numpy as np
+                      import matplotlib.pyplot as plt
+                      import seaborn as sns
                       
                   - type: "code"
                     content: |
                       target_column = "$target_column$"
                       num_classes = $num_classes$
 
+                      # Split the data
                       X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=[target_column]), df[target_column], test_size=0.2, random_state=42)
 
-                      # Create DMatrix for XGBoost
-                      dtrain = xgb.DMatrix(X_train, label=y_train)
-                      dtest = xgb.DMatrix(X_test, label=y_test)
+                      # Scale features for better model performance
+                      scaler = StandardScaler()
+                      X_train_scaled = scaler.fit_transform(X_train)
+                      X_test_scaled = scaler.transform(X_test)
 
-                      # Set parameters for XGBoost
+                      # Create DMatrix for XGBoost
+                      dtrain = xgb.DMatrix(X_train_scaled, label=y_train)
+                      dtest = xgb.DMatrix(X_test_scaled, label=y_test)
+
+                      # Set parameters for XGBoost with better defaults
                       params = {
                           'objective': 'multi:softmax',
                           'num_class': num_classes,
                           'max_depth': 6,
-                          'eta': 0.3,
+                          'eta': 0.1,
+                          'subsample': 0.8,
+                          'colsample_bytree': 0.8,
+                          'min_child_weight': 1,
                           'eval_metric': 'mlogloss'
                       }
 
-                      # Train the model
-                      num_rounds = 100
-                      model = xgb.train(params, dtrain, num_rounds)
+                      # Train the model with early stopping
+                      num_rounds = 1000
+                      eval_list = [(dtrain, 'train'), (dtest, 'eval')]
+                      model = xgb.train(params, dtrain, num_rounds, eval_list,
+                                     early_stopping_rounds=20, verbose_eval=100)
 
                   - type: "code"
                     content: |
@@ -49,8 +64,26 @@ decision_tree_modelling:
 
                       # Evaluate the model
                       accuracy = accuracy_score(y_test, y_pred)
-                      print(f"Accuracy: {accuracy}")
+                      print(f"Accuracy: {accuracy:.4f}")
                       
+                      # Detailed classification report
+                      print("\nClassification Report:")
+                      print(classification_report(y_test, y_pred))
+                      
+                      # Plot confusion matrix
+                      plt.figure(figsize=(10, 8))
+                      cm = confusion_matrix(y_test, y_pred)
+                      sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+                      plt.xlabel('Predicted')
+                      plt.ylabel('True')
+                      plt.title('Confusion Matrix')
+                      plt.show()
+                      
+                      # Feature importance
+                      plt.figure(figsize=(12, 6))
+                      xgb.plot_importance(model, max_num_features=20)
+                      plt.title('Feature Importance')
+                      plt.show()
                   
         - if: Regression
           then:
@@ -67,7 +100,10 @@ decision_tree_modelling:
                       import torch.nn as nn
                       import torch.optim as optim
                       from sklearn.model_selection import train_test_split
-                      from sklearn.metrics import mean_squared_error
+                      from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+                      from sklearn.preprocessing import StandardScaler
+                      import numpy as np
+                      import matplotlib.pyplot as plt
 
                   - type: "code"
                     content: |
@@ -75,28 +111,54 @@ decision_tree_modelling:
                       class NeuralNetModel(nn.Module):
                           def __init__(self, input_size):
                               super(NeuralNetModel, self).__init__()
-                              self.fc1 = nn.Linear(input_size, 64)
-                              self.fc2 = nn.Linear(64, 32)
-                              self.fc3 = nn.Linear(32, 1)
+                              self.fc1 = nn.Linear(input_size, 128)
+                              self.fc2 = nn.Linear(128, 64)
+                              self.fc3 = nn.Linear(64, 32)
+                              self.fc4 = nn.Linear(32, 1)
                               self.relu = nn.ReLU()
+                              self.dropout = nn.Dropout(0.2)
+                              self.bn1 = nn.BatchNorm1d(128)
+                              self.bn2 = nn.BatchNorm1d(64)
+                              self.bn3 = nn.BatchNorm1d(32)
                           
                           def forward(self, x):
-                              x = self.relu(self.fc1(x))
-                              x = self.relu(self.fc2(x))
-                              x = self.fc3(x)
+                              x = self.relu(self.bn1(self.fc1(x)))
+                              x = self.dropout(x)
+                              x = self.relu(self.bn2(self.fc2(x)))
+                              x = self.dropout(x)
+                              x = self.relu(self.bn3(self.fc3(x)))
+                              x = self.fc4(x)
                               return x
                   - type: "code"
                     content: |
                       # Regression with Neural Network
                       target_column = "$target_column$"
                       
+                      # Split and preprocess the data
                       X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=[target_column]), df[target_column], test_size=0.2, random_state=42)
 
+                      # Scale features (critical for neural networks)
+                      scaler_X = StandardScaler()
+                      X_train_scaled = scaler_X.fit_transform(X_train)
+                      X_test_scaled = scaler_X.transform(X_test)
+                      
+                      # Normalize target for better training
+                      y_mean = y_train.mean()
+                      y_std = y_train.std()
+                      y_train_scaled = (y_train - y_mean) / y_std
+                      y_test_scaled = (y_test - y_mean) / y_std
+
                       # Convert data to tensors
-                      X_train_tensor = torch.FloatTensor(X_train.values)
-                      y_train_tensor = torch.FloatTensor(y_train.values).reshape(-1, 1)
-                      X_test_tensor = torch.FloatTensor(X_test.values)
-                      y_test_tensor = torch.FloatTensor(y_test.values).reshape(-1, 1)
+                      X_train_tensor = torch.FloatTensor(X_train_scaled)
+                      y_train_tensor = torch.FloatTensor(y_train_scaled.values).reshape(-1, 1)
+                      X_test_tensor = torch.FloatTensor(X_test_scaled)
+                      y_test_tensor = torch.FloatTensor(y_test_scaled.values).reshape(-1, 1)
+                      
+                      # Create DataLoader for mini-batch training
+                      from torch.utils.data import TensorDataset, DataLoader
+                      train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+                      batch_size = 64
+                      train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
                   
                   - type: "code"
                     content: |
@@ -104,31 +166,112 @@ decision_tree_modelling:
                       input_size = X_train.shape[1]
                       model = NeuralNetModel(input_size)
                       criterion = nn.MSELoss()
-                      optimizer = optim.Adam(model.parameters(), lr=0.001)
+                      optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+                      
+                      # Learning rate scheduler
+                      scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
+                      
+                      # Early stopping parameters
+                      patience = 10
+                      best_loss = float('inf')
+                      counter = 0
                       
                       # Training loop
-                      num_epochs = 100
+                      num_epochs = 200
+                      train_losses = []
+                      val_losses = []
+                      
                       for epoch in range(num_epochs):
-                          # Forward pass
-                          outputs = model(X_train_tensor)
-                          loss = criterion(outputs, y_train_tensor)
+                          model.train()
+                          running_loss = 0.0
                           
-                          # Backward and optimize
-                          optimizer.zero_grad()
-                          loss.backward()
-                          optimizer.step()
+                          for batch_X, batch_y in train_loader:
+                              # Forward pass
+                              outputs = model(batch_X)
+                              loss = criterion(outputs, batch_y)
+                              
+                              # Backward and optimize
+                              optimizer.zero_grad()
+                              loss.backward()
+                              torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                              optimizer.step()
+                              
+                              running_loss += loss.item()
+                          
+                          epoch_loss = running_loss / len(train_loader)
+                          train_losses.append(epoch_loss)
+                          
+                          # Validation
+                          model.eval()
+                          with torch.no_grad():
+                              val_outputs = model(X_test_tensor)
+                              val_loss = criterion(val_outputs, y_test_tensor)
+                              val_losses.append(val_loss.item())
+                              
+                              # Learning rate scheduler step
+                              scheduler.step(val_loss)
+                              
+                              # Early stopping check
+                              if val_loss < best_loss:
+                                  best_loss = val_loss
+                                  counter = 0
+                                  # Save the model
+                                  torch.save(model.state_dict(), 'best_nn_model.pth')
+                              else:
+                                  counter += 1
+                          
+                          if counter >= patience:
+                              print(f'Early stopping triggered at epoch {epoch+1}')
+                              break
                           
                           if (epoch+1) % 10 == 0:
-                              print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+                              print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Val Loss: {val_loss:.4f}')
+                      
+                      # Load best model
+                      model.load_state_dict(torch.load('best_nn_model.pth'))
 
                   - type: "code"
                     content: |
                       # Evaluate the model
                       model.eval()
                       with torch.no_grad():
-                          y_pred = model(X_test_tensor)
-                          test_loss = criterion(y_pred, y_test_tensor)
-                          print(f'Test Loss: {test_loss.item():.4f}')
+                          y_pred_scaled = model(X_test_tensor)
+                          # Rescale back to original units
+                          y_pred = y_pred_scaled.numpy() * y_std + y_mean
+                          
+                          # Metrics on original scale
+                          test_mse = mean_squared_error(y_test, y_pred)
+                          test_rmse = np.sqrt(test_mse)
+                          test_mae = mean_absolute_error(y_test, y_pred)
+                          test_r2 = r2_score(y_test, y_pred)
+                          
+                          print(f'Test MSE: {test_mse:.4f}')
+                          print(f'Test RMSE: {test_rmse:.4f}')
+                          print(f'Test MAE: {test_mae:.4f}')
+                          print(f'Test R²: {test_r2:.4f}')
+                          
+                          # Plot results
+                          plt.figure(figsize=(12, 5))
+                          
+                          # Plot learning curve
+                          plt.subplot(1, 2, 1)
+                          plt.plot(train_losses)
+                          plt.plot(val_losses)
+                          plt.title('Learning Curve')
+                          plt.xlabel('Epoch')
+                          plt.ylabel('Loss')
+                          plt.legend(['Train', 'Validation'])
+                          
+                          # Plot predictions vs actual
+                          plt.subplot(1, 2, 2)
+                          plt.scatter(y_test, y_pred, alpha=0.3)
+                          plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
+                          plt.title('Predictions vs Actual')
+                          plt.xlabel('Actual')
+                          plt.ylabel('Predicted')
+                          
+                          plt.tight_layout()
+                          plt.show()
 
         - if : Time series forecasting
           then:
@@ -147,58 +290,93 @@ decision_tree_modelling:
                       import pandas as pd
                       from sklearn.model_selection import train_test_split
                       from sklearn.preprocessing import StandardScaler
+                      from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+                      import matplotlib.pyplot as plt
+                      from torch.utils.data import TensorDataset, DataLoader
 
                   - type: "code"
                     content: |
                       target_column = "$target_column$"
-
-                      X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=[target_column]), df[target_column], test_size=0.2, random_state=42)
+                      
+                      # Check for any missing values
+                      print(f"Missing values in dataset: {df.isna().sum().sum()}")
+                      
+                      # Remove non-feature columns if they exist
+                      features_to_drop = []
+                      for col in df.columns:
+                          if col != target_column and (col == 'ID' or col == 'Date' or 'Unnamed' in col):
+                              features_to_drop.append(col)
+                      
+                      if features_to_drop:
+                          print(f"Dropping non-feature columns: {features_to_drop}")
+                          df = df.drop(columns=features_to_drop)
+                      
+                      # Split into features and target
+                      X = df.drop(columns=[target_column])
+                      y = df[target_column]
+                      
+                      # Scale features - critical for LSTM performance
+                      scaler_X = StandardScaler()
+                      X_scaled = scaler_X.fit_transform(X)
+                      
+                      # Scale target for better training stability
+                      y_mean = y.mean()
+                      y_std = y.std()
+                      print(f"Target statistics - Mean: {y_mean:.4f}, Std: {y_std:.4f}")
+                      y_scaled = (y - y_mean) / y_std
                       
                       # Function to create sequences for time series forecasting
                       def create_sequences(X, y, seq_length):
                           xs, ys = [], []
                           for i in range(len(X) - seq_length):
-                              xs.append(X.iloc[i:i+seq_length].values)
-                              ys.append(y.iloc[i+seq_length])
+                              xs.append(X[i:i+seq_length])
+                              ys.append(y[i+seq_length])
                           return np.array(xs), np.array(ys)
                       
                       # Define sequence length for LSTM
                       seq_length = 10  # Number of time steps to look back
                       
-                      # Create sequences for training and test sets
-                      X_train_seq, y_train_seq = create_sequences(X_train, y_train, seq_length)
-                      X_test_seq, y_test_seq = create_sequences(X_test, y_test, seq_length)
+                      # Create sequences
+                      X_seq, y_seq = create_sequences(X_scaled, y_scaled, seq_length)
+                      print(f"Sequence shapes: X = {X_seq.shape}, y = {y_seq.shape}")
                       
-                      # Convert data to tensors
-                      X_train_tensor = torch.FloatTensor(X_train_seq)  # Shape: [batch_size, seq_length, features]
-                      y_train_tensor = torch.FloatTensor(y_train_seq).reshape(-1, 1)
-                      X_test_tensor = torch.FloatTensor(X_test_seq)
-                      y_test_tensor = torch.FloatTensor(y_test_seq).reshape(-1, 1)
+                      # Split into training and test sets - time order matters for time series
+                      train_size = int(len(X_seq) * 0.8)
+                      X_train, X_test = X_seq[:train_size], X_seq[train_size:]
+                      y_train, y_test = y_seq[:train_size], y_seq[train_size:]
                       
-                      print(f"Training data shape: {X_train_tensor.shape} - X, {y_train_tensor.shape} - y")
-                      print(f"Test data shape: {X_test_tensor.shape} - X, {y_test_tensor.shape} - y")
-
-                  - type: "code"
-                    content: |
-                      # Import numpy and pandas for sequence creation
-                      import numpy as np
-                      import pandas as pd
+                      # Convert to PyTorch tensors
+                      X_train_tensor = torch.FloatTensor(X_train)
+                      y_train_tensor = torch.FloatTensor(y_train).reshape(-1, 1)
+                      X_test_tensor = torch.FloatTensor(X_test)
+                      y_test_tensor = torch.FloatTensor(y_test).reshape(-1, 1)
+                      
+                      print(f"Training data: X = {X_train_tensor.shape}, y = {y_train_tensor.shape}")
+                      print(f"Test data: X = {X_test_tensor.shape}, y = {y_test_tensor.shape}")
 
                   - type: "code"
                     content: |
                       class LSTMModel(nn.Module):
-                          def __init__(self, input_size, hidden_size, output_size, num_layers=2):
+                          def __init__(self, input_size, hidden_size, num_layers=2, dropout=0.2):
                               super(LSTMModel, self).__init__()
                               self.hidden_size = hidden_size
                               self.num_layers = num_layers
                               
-                              # LSTM with multiple layers
-                              self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers, 
-                                                batch_first=True, dropout=0.2)
+                              # LSTM with multiple layers and dropout
+                              self.lstm = nn.LSTM(
+                                  input_size=input_size,
+                                  hidden_size=hidden_size,
+                                  num_layers=num_layers,
+                                  batch_first=True,
+                                  dropout=dropout
+                              )
                               
-                              # Fully connected layer
-                              self.fc = nn.Linear(hidden_size, output_size)
-
+                              # Fully connected layers with activation and dropout
+                              self.fc1 = nn.Linear(hidden_size, hidden_size // 2)
+                              self.relu = nn.ReLU()
+                              self.dropout = nn.Dropout(dropout)
+                              self.fc2 = nn.Linear(hidden_size // 2, 1)
+                              
                           def forward(self, x):
                               # Initialize hidden state with zeros
                               batch_size = x.size(0)
@@ -206,41 +384,55 @@ decision_tree_modelling:
                               c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
                               
                               # Forward propagate LSTM
-                              lstm_out, _ = self.lstm(x, (h0, c0))  # lstm_out shape: [batch_size, seq_length, hidden_size]
+                              lstm_out, _ = self.lstm(x, (h0, c0))
                               
-                              # Get the output from the last time step
-                              out = self.fc(lstm_out[:, -1, :])
+                              # Use output from the last time step
+                              out = self.fc1(lstm_out[:, -1, :])
+                              out = self.relu(out)
+                              out = self.dropout(out)
+                              out = self.fc2(out)
+                              
                               return out
 
                   - type: "code"
                     content: |
-                      # Initialize model, loss function and optimizer
-                      input_size = X_train_seq.shape[2]  # Number of features
-                      hidden_size = 64
-                      output_size = 1
+                      # Model configuration
+                      input_size = X_train.shape[2]  # Number of features
+                      hidden_size = 128
                       num_layers = 2
-                      model = LSTMModel(input_size, hidden_size, output_size, num_layers)
-                      criterion = nn.MSELoss()
-                      optimizer = optim.Adam(model.parameters(), lr=0.001)
+                      dropout = 0.2
                       
-                      # Create mini-batches for training
-                      from torch.utils.data import TensorDataset, DataLoader
-                      train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+                      # Create the model
+                      model = LSTMModel(input_size, hidden_size, num_layers, dropout)
+                      print(model)
+                      
+                      # Loss function and optimizer
+                      criterion = nn.MSELoss()
+                      optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+                      
+                      # Learning rate scheduler
+                      scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                          optimizer, mode='min', factor=0.5, patience=5
+                      )
+                      
+                      # Create DataLoader for batch training
                       batch_size = 64
+                      train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
                       train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
                   - type: "code"
                     content: |
-                      # Training loop
-                      num_epochs = 100
+                      # Training parameters
+                      num_epochs = 200
                       best_loss = float('inf')
-                      patience = 10
+                      patience = 15
                       counter = 0
-                      
-                      # For tracking metrics
                       train_losses = []
+                      val_losses = []
                       
+                      # Training loop
                       for epoch in range(num_epochs):
+                          # Training phase
                           model.train()
                           epoch_loss = 0
                           
@@ -252,31 +444,41 @@ decision_tree_modelling:
                               # Backward and optimize
                               optimizer.zero_grad()
                               loss.backward()
-                              # Optional gradient clipping to prevent exploding gradients
+                              # Gradient clipping to prevent exploding gradients
                               torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                               optimizer.step()
                               
                               epoch_loss += loss.item()
                           
-                          # Calculate average loss for the epoch
-                          avg_loss = epoch_loss / len(train_loader)
-                          train_losses.append(avg_loss)
+                          # Average loss for the epoch
+                          avg_train_loss = epoch_loss / len(train_loader)
+                          train_losses.append(avg_train_loss)
                           
-                          # Early stopping
-                          if avg_loss < best_loss:
-                              best_loss = avg_loss
-                              counter = 0
-                              # Save the model
-                              torch.save(model.state_dict(), 'best_lstm_model.pth')
-                          else:
-                              counter += 1
+                          # Validation phase
+                          model.eval()
+                          with torch.no_grad():
+                              val_outputs = model(X_test_tensor)
+                              val_loss = criterion(val_outputs, y_test_tensor)
+                              val_losses.append(val_loss.item())
+                              
+                              # Update learning rate
+                              scheduler.step(val_loss)
+                              
+                              # Early stopping check
+                              if val_loss < best_loss:
+                                  best_loss = val_loss
+                                  counter = 0
+                                  # Save the best model
+                                  torch.save(model.state_dict(), 'best_lstm_model.pth')
+                              else:
+                                  counter += 1
                           
                           if counter >= patience:
                               print(f'Early stopping triggered at epoch {epoch+1}')
                               break
                           
-                          if (epoch+1) % 5 == 0:
-                              print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}')
+                          if (epoch+1) % 10 == 0:
+                              print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {val_loss.item():.4f}')
                       
                       # Load the best model
                       model.load_state_dict(torch.load('best_lstm_model.pth'))
@@ -288,32 +490,22 @@ decision_tree_modelling:
                       with torch.no_grad():
                           # Make predictions
                           test_predictions = model(X_test_tensor)
-                          test_loss = criterion(test_predictions, y_test_tensor)
+                          
+                          # Convert to numpy and rescale back to original units
+                          y_pred_scaled = test_predictions.numpy().flatten()
+                          y_true_scaled = y_test_tensor.numpy().flatten()
+                          
+                          # Convert predictions back to original scale
+                          y_pred = y_pred_scaled * y_std + y_mean
+                          y_true = y_true_scaled * y_std + y_mean
                           
                           # Calculate metrics
-                          from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-                          
-                          y_pred = test_predictions.numpy().flatten()
-                          y_true = y_test_tensor.numpy().flatten()
-                          
                           mse = mean_squared_error(y_true, y_pred)
                           rmse = np.sqrt(mse)
                           mae = mean_absolute_error(y_true, y_pred)
                           r2 = r2_score(y_true, y_pred)
                           
-                          print(f'Test Loss: {test_loss.item():.4f}')
                           print(f'MSE: {mse:.4f}')
                           print(f'RMSE: {rmse:.4f}')
                           print(f'MAE: {mae:.4f}')
                           print(f'R² Score: {r2:.4f}')
-
-  - if: "No tabular data"
-    then:
-      actions:
-        - leaf_id: 4
-          cell_title: "Not supported Yet"
-          arguments: []
-          cell_content:
-            - type: "markdown"
-              content: |
-                # Not supported Yet
