@@ -1,5 +1,5 @@
 decision_tree_modelling:
-  - if: data_type == "Tabular data only"
+  - if: Tabular data only
     then:
       actions:
         - if: Multiclass classification

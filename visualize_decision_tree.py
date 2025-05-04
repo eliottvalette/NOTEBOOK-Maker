@@ -8,9 +8,9 @@ import os
 import re
 import json
 
-def load_decision_tree():
+def load_decision_tree(decision_tree):
     """Charge l'arbre de décision depuis le fichier YAML."""
-    with open('decision_tree.yaml', 'r') as file:
+    with open(decision_tree, 'r') as file:
         tree_data = yaml.safe_load(file)
     return tree_data
 
@@ -33,14 +33,14 @@ def create_node_id(text):
         node_id = 'n' + node_id
     return node_id
 
-def visualize_decision_tree():
+def visualize_decision_tree(decision_tree):
     """Génère uniquement une visualisation HTML interactive de l'arbre de décision."""
     try:
         import networkx as nx
         from pyvis.network import Network
         
         # Charger l'arbre de décision
-        tree_data = load_decision_tree()
+        tree_data = load_decision_tree(decision_tree)
         
         # Créer un graphe NetworkX
         G = nx.DiGraph()
@@ -133,11 +133,16 @@ def visualize_decision_tree():
                 for item in data:
                     add_nodes_edges(item, parent_id, edge_label, node_counter)
         
-        # Au lieu d'ajouter directement les nœuds de l'arbre, nous allons d'abord
-        # extraire les conditions principales puis les connecter au nœud racine
-        if 'decision_tree' in tree_data and isinstance(tree_data['decision_tree'], list):
+        # Trouver la clé principale dans le fichier YAML
+        main_key = None
+        for key in tree_data:
+            if key.startswith('decision_tree'):
+                main_key = key
+                break
+        
+        if main_key and main_key in tree_data and isinstance(tree_data[main_key], list):
             top_level_nodes = []
-            for i, item in enumerate(tree_data['decision_tree']):
+            for i, item in enumerate(tree_data[main_key]):
                 if 'if' in item:
                     # Créer un nœud pour chaque condition principale
                     condition = extract_condition(item['if'])
@@ -161,7 +166,11 @@ def visualize_decision_tree():
                         add_nodes_edges(item['else'], node_id, None, {'count': 100 + i*100 + 50})
         else:
             # Fallback au cas où la structure n'est pas comme attendu
-            add_nodes_edges(tree_data['decision_tree'])
+            print(f"Structure non reconnue dans le fichier YAML : {', '.join(tree_data.keys())}")
+            if main_key:
+                add_nodes_edges(tree_data[main_key])
+            else:
+                add_nodes_edges(tree_data)
         
         # Créer un fichier HTML directement sans passer par pyvis.save_graph
         output_file = 'decision_tree_interactive.html'
@@ -337,18 +346,9 @@ def visualize_decision_tree():
     
     except Exception as e:
         print(f"Erreur lors de la génération de la visualisation HTML : {str(e)}")
-        print("Assurez-vous d'avoir installé les packages requis : pip install networkx pyvis")
         return False
 
 if __name__ == "__main__":
     print("Génération de la visualisation interactive de l'arbre de décision...")
-    
-    try:
-        import networkx
-        import pyvis
-        visualize_decision_tree()
-    except ImportError as e:
-        print(f"\nErreur : {e}")
-        print("Pour générer la visualisation, installez les packages requis :")
-        print("pip install networkx pyvis pyyaml")
-        print("Puis relancez ce script.") 
+    visualize_decision_tree(decision_tree = 'decision_tree_preprocessing.yaml')
+    visualize_decision_tree(decision_tree = 'decision_tree_modelling.yaml')

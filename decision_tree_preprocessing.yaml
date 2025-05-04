@@ -1,11 +1,11 @@
 decision_tree_preprocessing:
-  - if: data_type == "Tabular data only"
+  - if: Tabular data only
     then:
       actions:
-        - if: table_count == "One table"
+        - if: One table
           then:
             actions:
-              - if: table_format == "CSV"
+              - if: CSV
                 then:
                   actions:
                     - leaf_id: 1
@@ -22,7 +22,7 @@ decision_tree_preprocessing:
                           print("Column names:", df.columns.tolist())
                           df.head()
 
-              - if: table_format == "Excel"
+              - if: Excel
                 then:
                   actions:
                     - leaf_id: 2
@@ -39,13 +39,13 @@ decision_tree_preprocessing:
                             print("Column names:", df.columns.tolist())
                             df.head()
                             
-        - if: table_count == "Multiple tables"
+        - if: Multiple tables
           then:
             actions:
-              - if: multiple_tables_format == "CSV"
+              - if: CSV
                 then:
                   actions:
-                    - if: csv_join_possibility == "All can be joined on a common ID column"
+                    - if: All can be joined on a common ID column
                       then:
                         actions:
                           - leaf_id: 3
@@ -88,7 +88,7 @@ decision_tree_preprocessing:
                                   print("Colonnes du DataFrame final:", df.columns.tolist())
                                   df.head()
                                   
-                    - if: csv_join_possibility == "Cannot be joined"
+                    - if: Cannot be joined
                       then:
                         actions:
                           - leaf_id: 4
@@ -99,7 +99,7 @@ decision_tree_preprocessing:
                                 content: |
                                   # Not supported Yet
                               
-              - if: multiple_tables_format == "Excel with multiple sheets"
+              - if: Excel with multiple sheets
                 then:
                   actions:
                     - leaf_id: 5
@@ -110,7 +110,7 @@ decision_tree_preprocessing:
                           content: |
                             # Not supported Yet
 
-  - if: data_type == "Images and tabular data"
+  - if: Images and tabular data
     then:
       actions:
         - leaf_id: 6
