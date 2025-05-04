@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Decision Tree Visualization</title>
+    <!-- Load vis.js from CDN -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+        #mynetwork {
+            width: 100%;
+            height: 800px;
+            border: 1px solid lightgray;
+            background-color: #f9f9f9;
+        }
+        .vis-tooltip {
+            position: absolute;
+            visibility: hidden;
+            padding: 5px;
+            white-space: nowrap;
+            font-family: verdana;
+            font-size: 14px;
+            color: #000000;
+            background-color: #f5f4ed;
+            -moz-border-radius: 3px;
+            -webkit-border-radius: 3px;
+            border-radius: 3px;
+            border: 1px solid #808074;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            word-break: break-word;
+        }
+        h1 {
+            font-family: Arial, sans-serif;
+            color: #333;
+            text-align: center;
+        }
+        .info {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>Decision Tree Visualization</h1>
+    <div class="info">
+        <p><strong>Instructions:</strong> You can zoom in/out with the mouse wheel, move the graph by holding the left click, and see details by hovering over nodes.</p>
+    </div>
+
+    <div id="mynetwork"></div>
+
+    <script type="text/javascript">
+        // Create a vis.js network
+        var container = document.getElementById('mynetwork');
+        
+        // Data for the network
+        var data = {
+            nodes: new vis.DataSet([{"id": "root_node", "label": "Data Type", "title": "Starting point of the decision tree", "color": "#FFD700", "shape": "ellipse", "font": {"size": 16, "bold": true}}, {"id": "top_level_0", "label": "Tabular data only", "title": "Main condition: Tabular data only", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "decision_100", "label": "One table", "title": "Condition: One table", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "decision_101", "label": "CSV", "title": "Condition: CSV", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "leaf_1", "label": "Process Single Table\n(ID: 1)", "title": "<div style='max-width:300px'><h3>Process Single Table</h3><p><b>ID:</b> 1</p><p><b>Arguments:</b> csv_filename</p></div>", "color": "#C5E8B7", "shape": "box", "font": {"size": 14, "bold": true}}, {"id": "decision_102", "label": "Excel", "title": "Condition: Excel", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "leaf_2", "label": "Process Excel Table\n(ID: 2)", "title": "<div style='max-width:300px'><h3>Process Excel Table</h3><p><b>ID:</b> 2</p><p><b>Arguments:</b> excel_filename</p></div>", "color": "#C5E8B7", "shape": "box", "font": {"size": 14, "bold": true}}, {"id": "decision_103", "label": "Multiple tables", "title": "Condition: Multiple tables", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "decision_104", "label": "CSV", "title": "Condition: CSV", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "decision_105", "label": "All can be joined on a common ID column", "title": "Condition: All can be joined on a common ID column", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "leaf_3", "label": "Merge CSVs with Common ID\n(ID: 3)", "title": "<div style='max-width:300px'><h3>Merge CSVs with Common ID</h3><p><b>ID:</b> 3</p><p><b>Arguments:</b> csv_filenames_list, common_id_column</p></div>", "color": "#C5E8B7", "shape": "box", "font": {"size": 14, "bold": true}}, {"id": "decision_106", "label": "Cannot be joined", "title": "Condition: Cannot be joined", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "leaf_4", "label": "Handle CSVs That Cannot Be Joined (Not supported yet)\n(ID: 4)", "title": "<div style='max-width:300px'><h3>Handle CSVs That Cannot Be Joined (Not supported yet)</h3><p><b>ID:</b> 4</p></div>", "color": "#C5E8B7", "shape": "box", "font": {"size": 14, "bold": true}}, {"id": "decision_107", "label": "Excel with multiple sheets", "title": "Condition: Excel with multiple sheets", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "leaf_5", "label": "Process Excel with Multiple Sheets\n(ID: 5)", "title": "<div style='max-width:300px'><h3>Process Excel with Multiple Sheets</h3><p><b>ID:</b> 5</p></div>", "color": "#C5E8B7", "shape": "box", "font": {"size": 14, "bold": true}}, {"id": "top_level_1", "label": "Images and tabular data", "title": "Main condition: Images and tabular data", "color": "#D2E5FF", "shape": "diamond", "font": {"size": 14}}, {"id": "leaf_6", "label": "Not supported Yet\n(ID: 6)", "title": "<div style='max-width:300px'><h3>Not supported Yet</h3><p><b>ID:</b> 6</p></div>", "color": "#C5E8B7", "shape": "box", "font": {"size": 14, "bold": true}}]),
+            edges: new vis.DataSet([{"from": "root_node", "to": "top_level_0", "arrows": "to"}, {"from": "root_node", "to": "top_level_1", "arrows": "to"}, {"from": "top_level_0", "to": "decision_100", "arrows": "to"}, {"from": "top_level_0", "to": "decision_103", "arrows": "to"}, {"from": "decision_100", "to": "decision_101", "arrows": "to"}, {"from": "decision_100", "to": "decision_102", "arrows": "to"}, {"from": "decision_101", "to": "leaf_1", "arrows": "to"}, {"from": "decision_102", "to": "leaf_2", "arrows": "to"}, {"from": "decision_103", "to": "decision_104", "arrows": "to"}, {"from": "decision_103", "to": "decision_107", "arrows": "to"}, {"from": "decision_104", "to": "decision_105", "arrows": "to"}, {"from": "decision_104", "to": "decision_106", "arrows": "to"}, {"from": "decision_105", "to": "leaf_3", "arrows": "to"}, {"from": "decision_106", "to": "leaf_4", "arrows": "to"}, {"from": "decision_107", "to": "leaf_5", "arrows": "to"}, {"from": "top_level_1", "to": "leaf_6", "arrows": "to"}])
+        };
+        
+        // Options for the network
+        var options = {"nodes": {"font": {"size": 16}, "margin": 10}, "edges": {"color": {"inherit": true}, "smooth": {"enabled": true, "type": "straightCross"}, "arrows": {"to": {"enabled": true, "scaleFactor": 1}}}, "physics": {"enabled": true, "hierarchicalRepulsion": {"centralGravity": 0.0, "springLength": 120, "springConstant": 0.01, "nodeDistance": 250}, "minVelocity": 0.75, "solver": "hierarchicalRepulsion"}, "layout": {"hierarchical": {"enabled": true, "direction": "UD", "sortMethod": "directed", "levelSeparation": 180, "nodeSpacing": 200, "treeSpacing": 200}}, "interaction": {"navigationButtons": true, "keyboard": true}};
+        
+        // Initialize the network
+        var network = new vis.Network(container, data, options);
+        
+        // Zoom to fit the graph
+        network.once('afterDrawing', function() {
+            network.fit({
+                animation: {
+                    duration: 1000,
+                    easingFunction: 'easeInOutQuad'
+                }
+            });
+        });
+    </script>
+</body>
+</html>
