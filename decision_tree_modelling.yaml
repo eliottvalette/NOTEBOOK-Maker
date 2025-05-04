@@ -153,15 +153,6 @@ decision_tree_modelling:
                       target_column = "$target_column$"
 
                       X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=[target_column]), df[target_column], test_size=0.2, random_state=42)
-
-                      # Normalize features
-                      scaler = StandardScaler()
-                      X_train_scaled = scaler.fit_transform(X_train)
-                      X_test_scaled = scaler.transform(X_test)
-                      
-                      # Convert back to DataFrame to keep column information
-                      X_train = pd.DataFrame(X_train_scaled, columns=X_train.columns, index=X_train.index)
-                      X_test = pd.DataFrame(X_test_scaled, columns=X_test.columns, index=X_test.index)
                       
                       # Function to create sequences for time series forecasting
                       def create_sequences(X, y, seq_length):
