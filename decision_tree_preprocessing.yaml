@@ -110,10 +110,18 @@ decision_tree_preprocessing:
                           content: |
                             # Not supported Yet
 
-  - if: Images and tabular data
+  - if: Images
     then:
       actions:
         - leaf_id: 6
+          cell_title: "Not supported Yet"
+          arguments: []
+          cell_content:
+
+  - if: Images and tabular data
+    then:
+      actions:
+        - leaf_id: 7
           cell_title: "Not supported Yet"
           arguments: []
           cell_content:

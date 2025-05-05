@@ -1,32 +1,41 @@
-# 🔮 Automated Data Science Notebook Generator (Prototype)
+# Automated Data Science Notebook Generator (Prototype)
 
 This project is a prototype of a fully automated pipeline that ingests user-provided data, determines appropriate analysis/modeling objectives, and generates executable Jupyter notebooks through an intelligent decision tree system powered by Mistral API.
 
-## 🚧 Work in Progress
+## Work in Progress
 **Note: This project is currently under active development.** The decision tree structure and some core components are still being built and refined.
 
-## 💡 Project Overview
+## Project Overview
 
 The main goal is to streamline the data analysis and modeling workflow by:
 - Automatically analyzing input datasets
 - Routing through a decision tree based on data characteristics and user preferences
 - Generating and executing custom Jupyter notebooks tailored to specific analysis needs
 
-## 📁 Current Data Support
+## Current Data Support
 
-The pipeline currently supports:
-- **Tabular data**: 
-  - Single CSV/Excel files
-  - Multiple CSV files with common ID columns
-  - Different analysis types:
-    - Multiclass classification
-    - Regression
-    - Time series forecasting
+The pipeline is structured based on the decision trees defined in YAML files and currently supports:
 
-## ⚙️ Pipeline Architecture
+### Tabular Data Processing (Based on decision_tree_preprocessing.yaml)
+- **Single Table Processing**:
+  - CSV files
+  - Excel files
+- **Multiple Tables Processing**:
+  - CSV files with common ID column for joining
+  - Excel files with multiple sheets (planned)
+
+### Modeling Approaches (Based on decision_tree_modelling.yaml)
+- **Multiclass Classification**:
+  - Random Forest/XGBoost implementation
+- **Regression**:
+  - Neural Network implementation
+- **Time Series Forecasting**:
+  - LSTM implementation
+
+## Pipeline Architecture
 
 1. **Data Ingestion**
-   - Loading various data formats (currently focusing on CSV files)
+   - Loading various data formats according to preprocessing decision tree
    - Basic data inspection and feature analysis
 
 2. **User Preferences Collection**
@@ -34,27 +43,27 @@ The pipeline currently supports:
    - Analysis objectives determination
 
 3. **Decision Tree Logic**
-   - YAML-defined decision trees for preprocessing and modeling
-   - Mistral API integration for intelligent routing
+   - Structured YAML-defined decision trees for preprocessing and modeling
+   - Mistral API integration for intelligent routing through the decision trees
 
 4. **Dynamic Notebook Generation**
    - Context-aware code cell generation
-   - Appropriate model selection based on data characteristics
-   - Code generation for visualization and evaluation
+   - Model selection based on data characteristics
+   - Code generation for preprocessing, modeling, visualization, and evaluation
 
 5. **Execution Engine**
    - Automatic notebook execution
    - Results and visualizations generation
 
-## 🧠 Decision Tree System
+## Decision Tree System
 
 The system uses two primary decision trees:
 - **Preprocessing Decision Tree**: Determines how to handle data based on format and structure
 - **Modeling Decision Tree**: Selects appropriate modeling techniques based on task type
 
-Each decision point routes to specific code generation templates that are then assembled into a complete notebook.
+Each leaf node in the decision trees contains specific code templates that are assembled into a complete notebook.
 
-## 🚀 Getting Started
+## Getting Started
 
 1. Clone this repository
 2. Install required dependencies (requirements file coming soon)
@@ -64,14 +73,7 @@ Each decision point routes to specific code generation templates that are then a
    python prototype.py
    ```
 
-## 📊 Example Use Cases
-
-Currently implemented:
-- Multiclass classification with XGBoost and evaluation metrics
-- Regression with neural networks
-- Time series forecasting with LSTM
-
-## 🔜 Coming Soon
+## Coming Soon
 
 - Web interface for dataset upload and configuration
 - Support for more data types (images, text)
@@ -79,14 +81,14 @@ Currently implemented:
 - User-friendly parameter customization
 - Enhanced visualization options
 
-## 📁 Input Data
+## Input Data
 
 The pipeline expects:
 - Two CSV files:
   - One with a common `ID` column and various features,
   - The other also containing a `YTarget` column (the target variable).
 
-## ⚙️ Pipeline Steps
+## Pipeline Steps
 
 1. **Data Loading and Merging**
    - Load both CSVs with `pandas`.
@@ -115,7 +117,7 @@ The pipeline expects:
    - The notebook is automatically executed (e.g., via `nbconvert` or `papermill`).
    - Results are returned to the user, including metrics and visualizations.
 
-## 🧠 Example Decision Tree (YAML)
+## Example Decision Tree (YAML)
 
 ```yaml
 questions:

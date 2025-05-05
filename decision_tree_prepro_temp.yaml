@@ -1,0 +1,109 @@
+decision_tree_preprocessing:
+  - if: Tabular data only
+    then:
+      actions:
+        - if: One table
+          then:
+            actions:
+              - if: CSV
+                then:
+                  actions:
+                    - if: Has headers
+                      then:
+                        actions:
+                          - leaf_id: 1
+                            cell_title: "Process CSV with Headers"
+                            arguments: [csv_filename]
+                            cell_content: [...]
+                      else:
+                        actions:
+                          - leaf_id: 2
+                            cell_title: "Process CSV Without Headers"
+                            arguments: [csv_filename]
+                            cell_content: [...]
+
+              - if: Excel
+                then:
+                  actions:
+                    - if: Multiple sheets
+                      then:
+                        actions:
+                          - leaf_id: 3
+                            cell_title: "Handle Excel with Sheets"
+                            arguments: [excel_filename]
+                            cell_content: [...]
+                      else:
+                        actions:
+                          - leaf_id: 4
+                            cell_title: "Handle Excel Single Sheet"
+                            arguments: [excel_filename]
+                            cell_content: [...]
+
+        - if: Multiple tables
+          then:
+            actions:
+              - if: All CSV
+                then:
+                  actions:
+                    - if: Can join on common ID
+                      then:
+                        actions:
+                          - if: All have same row count
+                            then:
+                              actions:
+                                - leaf_id: 5
+                                  cell_title: "Merge CSVs Perfect Match"
+                                  arguments: [csv_filenames_list, common_id_column]
+                                  cell_content: [...]
+                            else:
+                              actions:
+                                - leaf_id: 6
+                                  cell_title: "Merge CSVs Partial Match"
+                                  arguments: [csv_filenames_list, common_id_column]
+                                  cell_content: [...]
+
+                    - if: Cannot join
+                      then:
+                        actions:
+                          - leaf_id: 7
+                            cell_title: "Multiple CSVs Without Join"
+                            arguments: [csv_filenames_list]
+                            cell_content: [...]
+
+              - if: Mixed formats (CSV + Excel)
+                then:
+                  actions:
+                    - leaf_id: 8
+                      cell_title: "Mixed File Types Preprocessing"
+                      arguments: [csv_filenames_list]
+                      cell_content: [...]
+
+  - if: Images only
+    then:
+      actions:
+        - if: JPEG format
+          then:
+            actions:
+              - leaf_id: 9
+                cell_title: "Process JPEG Images"
+                arguments: [image_folder]
+                cell_content: [...]
+
+        - if: PNG format
+          then:
+            actions:
+              - leaf_id: 10
+                cell_title: "Process PNG Images"
+                arguments: [image_folder]
+                cell_content: [...]
+
+  - if: Images and tabular data
+    then:
+      actions:
+        - if: Images mapped to tabular rows
+          then:
+            actions:
+              - leaf_id: 11
+                cell_title: "Multimodal Preprocessing"
+                arguments: [csv_filename, image_folder]
+                cell_content: [...]
