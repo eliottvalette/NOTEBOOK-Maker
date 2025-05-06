@@ -1,0 +1,81 @@
+{
+    "A_1_one_csv": [
+        {
+            "has_several_csvs": false,
+            "csv_filename": "Datasets/Tabular/Binary_pred/dataset1_with_target.csv",
+            "has_common_id": true,
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "Natural_language": "I have only one csv file, named dataset1_with_target.csv, and it has a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2."
+        },
+        {
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "wants_random_forest": true,
+            "wants_xgboost": true,
+            "wants_pytorch": true,
+            "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
+        },
+        {
+            "leaf_id_preprocessing": "1",
+            "leaf_id_modelling": "1"
+        }
+    ],
+    
+    "B_2_joinable_csvs": [
+        {
+            "has_several_csvs": true,
+            "number_of_csvs": 2,
+            "csv_filenames_list": ["Datasets/Tabular/Binary_pred/dataset1_with_target.csv", "Datasets/Tabular/Binary_pred/dataset2_features_only.csv"],
+            "has_common_id": true,
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "Natural_language": "I have two csv files, named dataset1_with_target.csv and dataset2_features_only.csv. They have a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2."
+        },
+        {
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "wants_random_forest": true,
+            "wants_xgboost": true,
+            "wants_pytorch": true,
+            "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
+        },
+        {
+            "leaf_id_preprocessing": "5",
+            "leaf_id_modelling": "1"
+        }
+
+    ],
+    "C_1_csv_time_series": [
+        {
+            "has_several_csvs": false,
+            "csv_filename": "Datasets/Tabular/Time_series/dataset_time_series.csv",
+            "has_common_id": true,
+            "num_classes": 2,
+            "common_id_column": "ID",
+            "target_column": "Target",
+            "Multiclass classification": false,
+            "Natural_language": "I have only one csv file, named dataset_time_series.csv, and it has a common ID column called ID and a target column called Target. I want to predict a time series, so I select Time series forecasting."
+        },
+        {
+            "common_id_column": "ID",
+            "target_column": "Target",
+            "num_classes": 2,
+            "Multiclass classification": false,
+            "wants_lstm": true,
+            "Natural_language": "I want to predict a time series, so I select Time series forecasting and LSTM."
+        },
+        {
+            "leaf_id_preprocessing": "1",
+            "leaf_id_modelling": "3"
+        }
+    ]
+}
