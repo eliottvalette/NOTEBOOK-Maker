@@ -28,8 +28,23 @@ decision_tree_preprocessing:
                             - type: "code"
                               content: |
                                 # Transform categorical columns to numerical
-                                df = pd.get_dummies(df)
+                                from sklearn.preprocessing import LabelEncoder
+                                label_encoders = {}
+                                for col in df.select_dtypes(include=['object', 'category']).columns:
+                                    le = LabelEncoder()
+                                    df[col] = le.fit_transform(df[col])
+                                    label_encoders[col] = le
                                 df.head()
+                            
+                            - type: "code"
+                              content: |
+                                # Display correlation matrix
+                                corr_matrix = df.corr()
+                                plt.figure(figsize=(12, 8))
+                                sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                plt.title('Correlation Matrix')
+                                plt.show()
+                                
                       else:
                         actions:
                           - leaf_id: 2
@@ -48,8 +63,22 @@ decision_tree_preprocessing:
                               - type: "code"
                                 content: |
                                   # Transform categorical columns to numerical
-                                  df = pd.get_dummies(df)
+                                  from sklearn.preprocessing import LabelEncoder
+                                  label_encoders = {}
+                                  for col in df.select_dtypes(include=['object', 'category']).columns:
+                                      le = LabelEncoder()
+                                      df[col] = le.fit_transform(df[col])
+                                      label_encoders[col] = le
                                   df.head()
+                              
+                              - type: "code"
+                                content: |
+                                  # Display correlation matrix
+                                  corr_matrix = df.corr()
+                                  plt.figure(figsize=(12, 8))
+                                  sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                  plt.title('Correlation Matrix')
+                                  plt.show()
               - if: Excel
                 then:
                   actions:
@@ -74,11 +103,26 @@ decision_tree_preprocessing:
                                   print("Table shape:", df.shape)
                                   print("Column names:", df.columns.tolist())
                                   df.head()
+
                               - type: "code"
                                 content: |
                                   # Transform categorical columns to numerical
-                                  df = pd.get_dummies(df)
+                                  from sklearn.preprocessing import LabelEncoder
+                                  label_encoders = {}
+                                  for col in df.select_dtypes(include=['object', 'category']).columns:
+                                      le = LabelEncoder()
+                                      df[col] = le.fit_transform(df[col])
+                                      label_encoders[col] = le
                                   df.head()
+                              
+                              - type: "code"
+                                content: |
+                                  # Display correlation matrix
+                                  corr_matrix = df.corr()
+                                  plt.figure(figsize=(12, 8))
+                                  sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                  plt.title('Correlation Matrix')
+                                  plt.show()
         - if: Multiple tables
           then:
             actions:
@@ -132,8 +176,22 @@ decision_tree_preprocessing:
                             - type: "code"
                               content: |
                                 # Transform categorical columns to numerical
-                                df = pd.get_dummies(df)
+                                from sklearn.preprocessing import LabelEncoder
+                                label_encoders = {}
+                                for col in df.select_dtypes(include=['object', 'category']).columns:
+                                    le = LabelEncoder()
+                                    df[col] = le.fit_transform(df[col])
+                                    label_encoders[col] = le
                                 df.head()
+                            
+                            - type: "code"
+                                content: |
+                                  # Display correlation matrix
+                                  corr_matrix = df.corr()
+                                  plt.figure(figsize=(12, 8))
+                                  sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                  plt.title('Correlation Matrix')
+                                  plt.show()
 
                     - if: All have same row count
                       then:
