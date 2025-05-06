@@ -11,34 +11,28 @@ decision_tree_preprocessing:
                     - if: Has headers
                       then:
                         actions:
-                          - if: Numerical data only
-                            then:
-                              actions:
-                                - leaf_id: 1
-                                  cell_title: "Process Single Table"
-                                  arguments: ['csv_filename']
-                                  cell_content:
-                                  - type: "code"
-                                    content: |
-                                      # Load the dataset
-                                      df = pd.read_csv('$csv_filename$')
-                                      
-                                      # Display basic information
-                                      print("Table shape:", df.shape)
-                                      print("Column names:", df.columns.tolist())
-                                      df.head()
-                          - if: Numerical and categorical data
-                            then:
-                              actions:
-                                - leaf_id: 2
-                                  cell_title: "Process Mixed Data Table"
-                                  cell_content:
-                                  - type: "markdown"
-                                    content: |
-                                      # Not supported yet
+                          - leaf_id: 1
+                            cell_title: "Process Single Table"
+                            arguments: ['csv_filename']
+                            cell_content:
+                            - type: "code"
+                              content: |
+                                # Load the dataset
+                                df = pd.read_csv('$csv_filename$')
+                                
+                                # Display basic information
+                                print("Table shape:", df.shape)
+                                print("Column names:", df.columns.tolist())
+                                df.head()
+                            
+                            - type: "code"
+                              content: |
+                                # Transform categorical columns to numerical
+                                df = pd.get_dummies(df)
+                                df.head()
                       else:
                         actions:
-                          - leaf_id: 3
+                          - leaf_id: 2
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
@@ -50,42 +44,36 @@ decision_tree_preprocessing:
                                   # Display basic information
                                   print("Table shape:", df.shape)
                                   df.head()
+
+                              - type: "code"
+                                content: |
+                                  # Transform categorical columns to numerical
+                                  df = pd.get_dummies(df)
+                                  df.head()
               - if: Excel
                 then:
                   actions:
                     - if: Multiple sheets
                       then:
                         actions:
-                          - leaf_id: 4
+                          - leaf_id: 3
                             cell_title: "Error, Should have said multiple tables"
                             error: true
                       else:
                         actions:
-                          - if: Numerical data only
-                            then:
-                              actions:
-                                - leaf_id: 4
-                                  cell_title: "Process Excel Table"
-                                  arguments: ['excel_filename']
-                                  cell_content:
-                                  - type: "code"
-                                    content: |
-                                      # Load the dataset
-                                      df = pd.read_excel('$excel_filename$')
+                          - leaf_id: 4
+                            cell_title: "Process Excel Table"
+                            arguments: ['excel_filename']
+                            cell_content:
+                              - type: "code"
+                                content: |
+                                  # Load the dataset
+                                  df = pd.read_excel('$excel_filename$')
 
-                                      # Display basic information
-                                      print("Table shape:", df.shape)
-                                      print("Column names:", df.columns.tolist())
-                                      df.head()
-                          - if: Numerical and categorical data
-                            then:
-                              actions:
-                                - leaf_id: 5
-                                  cell_title: "Process Mixed Data Excel Table"
-                                  cell_content:
-                                  - type: "markdown"
-                                    content: |
-                                      # Not supported yet
+                                  # Display basic information
+                                  print("Table shape:", df.shape)
+                                  print("Column names:", df.columns.tolist())
+                                  df.head()
         - if: Multiple tables
           then:
             actions:
@@ -95,94 +83,71 @@ decision_tree_preprocessing:
                     - if: Can join on common ID
                       then:
                         actions:
-                          - if: All have same row count
+                          - leaf_id: 5
+                            cell_title: "Merge CSVs on Common ID"
+                            arguments: ["csv_filenames_list", "common_id_column"]
+                            cell_content: 
+                            - type: "code"
+                              content: |
+                                # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
+                                dataframes = {}
+
+                                for csv_filename in $csv_filenames_list$:
+                                    dataframes[csv_filename] = pd.read_csv(csv_filename)
+                                    print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
+                                    print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
+                                
+                                # Afficher la liste des DataFrames chargés
+                                list(dataframes.keys())
+                                
+                            - type: "code"
+                              content: |
+                                # Fusionner tous les DataFrames sur la colonne d'ID commune
+                                merged_df = None
+                                
+                                for df_name, df in dataframes.items():
+                                    if "$common_id_column$" not in df.columns:
+                                        print(f"Attention: La colonne '$common_id_column$' n'est pas présente dans {df_name}")
+                                        continue
+                                        
+                                    if merged_df is None:
+                                        merged_df = df.copy()
+                                    else:
+                                        # Utiliser un suffixe pour éviter la duplication des noms de colonnes
+                                        merged_df = pd.merge(merged_df, df, on="$common_id_column$", how='outer', 
+                                                            suffixes=('', f'_{df_name}'))
+                                # Standardize merged df
+                                df = merged_df
+
+                                # Afficher des informations sur le DataFrame fusionné
+                                print("Shape du DataFrame final:", df.shape)
+                                print("Colonnes du DataFrame final:", df.columns.tolist())
+                                df.head()
+                    - if: All have same row count
                             then:
                               actions:
                                 - leaf_id: 6
-                                  cell_title: "Merge CSVs Perfect Match"
-                                  arguments: ["csv_filenames_list", "common_id_column"]
-                                  cell_content: 
-                                  - type: "code"
-                                    content: |
-                                      # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
-                                      dataframes = {}
-
-                                      for csv_filename in $csv_filenames_list$:
-                                          dataframes[csv_filename] = pd.read_csv(csv_filename)
-                                          print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
-                                          print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
-                                      
-                                      # Afficher la liste des DataFrames chargés
-                                      list(dataframes.keys())
-                                  - type: "code"
-                                    content: |
-                                      # Fusionner tous les DataFrames sur la colonne d'ID commune
-                                      merged_df = None
-                                      
-                                      for df_name, df in dataframes.items():
-                                          if "$common_id_column$" not in df.columns:
-                                              print(f"Attention: La colonne '$common_id_column$' n'est pas présente dans {df_name}")
-                                              continue
-                                              
-                                          if merged_df is None:
-                                              merged_df = df.copy()
-                                          else:
-                                              # Utiliser un suffixe pour éviter la duplication des noms de colonnes
-                                              merged_df = pd.merge(merged_df, df, on="$common_id_column$", how='outer', 
-                                                                  suffixes=('', f'_{df_name}'))
-                                      # Standardize merged df
-                                      df = merged_df
-
-                                      # Afficher des informations sur le DataFrame fusionné
-                                      print("Shape du DataFrame final:", df.shape)
-                                      print("Colonnes du DataFrame final:", df.columns.tolist())
-                                      df.head()
-                          - else:
-                            actions:
-                              - leaf_id: 7
-                                cell_title: "Merge CSVs Partial Match"
-                                arguments: ["csv_filenames_list", "common_id_column"]
-                                cell_content:
-                                  - type: "code"
+                                  cell_title: "Merge CSVs By Concatenation"
+                                  arguments: ["csv_filenames_list"]
+                                  cell_content:
+                                    - type: "code"
                                     content: |
                                       # Not supported yet
-
-                    - if: No common ID
+                    - if: No common ID and not all have same row count
                       then:
                         actions:
-                          - if: All have same row count and ordered the same way
-                            then:
-                              actions:
-                                - leaf_id: 8
-                                  cell_title: "Multiple CSVs Without Join"
-                                  arguments: ["csv_filenames_list"]
-                                  cell_content:
-                                    - type: "markdown"
-                                      content: |
-                                        # Not supported yet
-                          - if : Only some have common ID
-                            then:
-                              actions:
-                                - leaf_id: 9
-                                  cell_title: "Multiple CSVs Without Join"
-                                  arguments: ["csv_filenames_list"]
-                                  cell_content:
-                                    - type: "markdown"
-                                      content: |
-                                        # Not supported yet
-                          - else:
-                            actions:
-                              - leaf_id: 10
-                                cell_title: "Multiple CSVs Without Join"
-                                arguments: ["csv_filenames_list"]
-                                cell_content:
-                                  - type: "markdown"
-                                    content: |
-                                      # Not supported yet
+                          - leaf_id: 7
+                            cell_title: "Multiple CSVs Without Join Possible"
+                            arguments: ["csv_filenames_list"]
+                            cell_content:
+                              - type: "markdown"
+                                content: |
+                                  # Not supported yet
+
               - if: Excel with multiple sheets
                 then:
                   actions:
-                    - leaf_id: 11
+                    - leaf_id: 8
                       cell_title: "Process Excel with Multiple Sheets"
                       arguments: []
                       cell_content: 
@@ -193,7 +158,7 @@ decision_tree_preprocessing:
               - if: Mixed formats (CSV + Excel)
                 then:
                   actions:
-                    - leaf_id: 12
+                    - leaf_id: 9
                       cell_title: "Mixed File Types Preprocessing"
                       arguments: ["csv_filenames_list"]
                       cell_content:
@@ -206,7 +171,7 @@ decision_tree_preprocessing:
         - if: JPEG format
           then:
             actions:
-              - leaf_id: 13
+              - leaf_id: 10
                 cell_title: "Process JPEG Images"
                 arguments: [image_folder]
                 cell_content: [...]
@@ -214,7 +179,7 @@ decision_tree_preprocessing:
         - if: PNG format
           then:
             actions:
-              - leaf_id: 14
+              - leaf_id: 11
                 cell_title: "Process PNG Images"
                 arguments: [image_folder]
                 cell_content: [...]
@@ -225,7 +190,7 @@ decision_tree_preprocessing:
         - if: Images mapped to tabular rows
           then:
             actions:
-              - leaf_id: 15
+              - leaf_id: 12
                 cell_title: "Multimodal Preprocessing"
                 arguments: [csv_filename, image_folder]
                 cell_content: [...]

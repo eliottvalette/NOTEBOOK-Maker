@@ -21,6 +21,7 @@ import yaml
 import time
 import random
 from dotenv import load_dotenv
+import json
 
 load_dotenv()   
 mistral_api_key = os.getenv('MISTRAL_API_KEY')
@@ -35,46 +36,12 @@ def load_datasets():
     return [df1, df2]
 
 # Simulate the User's answers to the questions
-'''
-TABULAR DATA ONLY AND BINARY PREDICTION
-form_answers_preprocessing = {
-    'has_several_csvs': True,
-    'number_of_csvs': 2,
-    'csv_filenames_list': ['Datasets/Tabular/Binary_pred/dataset1_with_target.csv', 'Datasets/Tabular/Binary_pred/dataset2_features_only.csv'],
-    'has_common_id': True,
-    'common_id_column': "ID",
-    'target_column': "YTarget",
-    'Multiclass classification': True,
-    'num_classes': 2,
-}
-
-form_answers_modelling = {
-    'common_id_column': "ID",
-    'target_column': "YTarget",
-    'Multiclass classification': True,
-    'num_classes': 2,
-    'wants_random_forest': True,
-    'wants_xgboost': True,
-    'wants_pytorch': True,
-}
-'''
-
-# TABULAR DATA ONLY AND TIME SERIES FORECASTING
-form_answers_preprocessing = {
-    'has_several_csvs': False,
-    'csv_filename': 'Datasets/Tabular/Time_series/dataset_time_series.csv',
-    'has_common_id': True,
-    'common_id_column': "ID",
-    'target_column': "Target",
-    'Multiclass classification': False,
-}
-
-form_answers_modelling = {
-    'common_id_column': "ID",
-    'target_column': "Target",
-    'Multiclass classification': False,
-    'wants_lstm': True,
-}
+with open('answers_examples.json', 'r') as file:
+    form_answers_examples = json.load(file)
+    form_answers_preprocessing = form_answers_examples["1_one_csv"][0]
+    form_answers_modelling = form_answers_examples["1_one_csv"][1]
+    leaf_id_preprocessing = form_answers_examples["1_one_csv"][2]['leaf_id_preprocessing']
+    leaf_id_modelling = form_answers_examples["1_one_csv"][2]['leaf_id_modelling']
 
 # Get insights from the data
 def get_insights(df, idx):

@@ -7,7 +7,8 @@
             "common_id_column": "ID",
             "target_column": "YTarget",
             "Multiclass classification": true,
-            "num_classes": 2
+            "num_classes": 2,
+            "Natural_language": "I have only one csv file, named dataset1_with_target.csv, and it has a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2."
         },
         {
             "common_id_column": "ID",
@@ -16,7 +17,12 @@
             "num_classes": 2,
             "wants_random_forest": true,
             "wants_xgboost": true,
-            "wants_pytorch": true
+            "wants_pytorch": true,
+            "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
+        },
+        {
+            "leaf_id_preprocessing": 1,
+            "leaf_id_modelling": 1
         }
     ],
     
@@ -29,7 +35,8 @@
             "common_id_column": "ID",
             "target_column": "YTarget",
             "Multiclass classification": true,
-            "num_classes": 2
+            "num_classes": 2,
+            "Natural_language": "I have two csv files, named dataset1_with_target.csv and dataset2_features_only.csv. They have a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2."
         },
         {
             "common_id_column": "ID",
@@ -38,7 +45,12 @@
             "num_classes": 2,
             "wants_random_forest": true,
             "wants_xgboost": true,
-            "wants_pytorch": true
+            "wants_pytorch": true,
+            "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
+        },
+        {
+            "leaf_id_preprocessing": 5,
+            "leaf_id_modelling": 1
         }
 
     ],
@@ -49,13 +61,19 @@
             "has_common_id": true,
             "common_id_column": "ID",
             "target_column": "Target",
-            "Multiclass classification": false
+            "Multiclass classification": false,
+            "Natural_language": "I have only one csv file, named dataset_time_series.csv, and it has a common ID column called ID and a target column called Target. I want to predict a time series, so I select Time series forecasting."
         },
         {
             "common_id_column": "ID",
             "target_column": "Target",
             "Multiclass classification": false,
-            "wants_lstm": true
+            "wants_lstm": true,
+            "Natural_language": "I want to predict a time series, so I select Time series forecasting and LSTM."
+        },
+        {
+            "leaf_id_preprocessing": 1,
+            "leaf_id_modelling": 1
         }
     ]
 }
