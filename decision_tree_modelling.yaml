@@ -469,7 +469,7 @@ decision_tree_modelling:
                                   best_loss = val_loss
                                   counter = 0
                                   # Save the best model
-                                  torch.save(model.state_dict(), 'best_lstm_model.pth')
+                                  torch.save(model.state_dict(), 'Output/best_lstm_model.pth')
                               else:
                                   counter += 1
                           
@@ -481,7 +481,7 @@ decision_tree_modelling:
                               print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {val_loss.item():.4f}')
                       
                       # Load the best model
-                      model.load_state_dict(torch.load('best_lstm_model.pth'))
+                      model.load_state_dict(torch.load('Output/best_lstm_model.pth'))
 
                   - type: "code"
                     content: |

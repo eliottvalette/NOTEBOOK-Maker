@@ -11,22 +11,34 @@ decision_tree_preprocessing:
                     - if: Has headers
                       then:
                         actions:
-                          - leaf_id: 1
-                            cell_title: "Process Single Table"
-                            arguments: ['csv_filename']
-                            cell_content:
-                            - type: "code"
-                              content: |
-                                # Load the dataset
-                                df = pd.read_csv('$csv_filename$')
-                                
-                                # Display basic information
-                                print("Table shape:", df.shape)
-                                print("Column names:", df.columns.tolist())
-                                df.head()
+                          - if: Numerical data only
+                            then:
+                              actions:
+                                - leaf_id: 1
+                                  cell_title: "Process Single Table"
+                                  arguments: ['csv_filename']
+                                  cell_content:
+                                  - type: "code"
+                                    content: |
+                                      # Load the dataset
+                                      df = pd.read_csv('$csv_filename$')
+                                      
+                                      # Display basic information
+                                      print("Table shape:", df.shape)
+                                      print("Column names:", df.columns.tolist())
+                                      df.head()
+                          - if: Numerical and categorical data
+                            then:
+                              actions:
+                                - leaf_id: 2
+                                  cell_title: "Process Mixed Data Table"
+                                  cell_content:
+                                  - type: "markdown"
+                                    content: |
+                                      # Not supported yet
                       else:
                         actions:
-                          - leaf_id: 2
+                          - leaf_id: 3
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
@@ -35,35 +47,45 @@ decision_tree_preprocessing:
                                   # Load the dataset
                                   df = pd.read_csv('$csv_filename$')
                                   
-                                  # Not supported yet
+                                  # Display basic information
+                                  print("Table shape:", df.shape)
+                                  df.head()
               - if: Excel
                 then:
                   actions:
                     - if: Multiple sheets
                       then:
                         actions:
-                          - leaf_id: 3
+                          - leaf_id: 4
                             cell_title: "Error, Should have said multiple tables"
-                            arguments: []
-                            cell_content:
-                              - type: "markdown"
-                                content: |
-                                  # Error, Should have said multiple tables
+                            error: true
                       else:
                         actions:
-                          - leaf_id: 4
-                            cell_title: "Process Excel Table"
-                            arguments: ['excel_filename']
-                            cell_content:
-                              - type: "code"
-                                content: |
-                                  # Load the dataset
-                                  df = pd.read_excel('$excel_filename$')
+                          - if: Numerical data only
+                            then:
+                              actions:
+                                - leaf_id: 4
+                                  cell_title: "Process Excel Table"
+                                  arguments: ['excel_filename']
+                                  cell_content:
+                                  - type: "code"
+                                    content: |
+                                      # Load the dataset
+                                      df = pd.read_excel('$excel_filename$')
 
-                                  # Display basic information
-                                  print("Table shape:", df.shape)
-                                  print("Column names:", df.columns.tolist())
-                                  df.head()
+                                      # Display basic information
+                                      print("Table shape:", df.shape)
+                                      print("Column names:", df.columns.tolist())
+                                      df.head()
+                          - if: Numerical and categorical data
+                            then:
+                              actions:
+                                - leaf_id: 5
+                                  cell_title: "Process Mixed Data Excel Table"
+                                  cell_content:
+                                  - type: "markdown"
+                                    content: |
+                                      # Not supported yet
         - if: Multiple tables
           then:
             actions:
@@ -76,7 +98,7 @@ decision_tree_preprocessing:
                           - if: All have same row count
                             then:
                               actions:
-                                - leaf_id: 5
+                                - leaf_id: 6
                                   cell_title: "Merge CSVs Perfect Match"
                                   arguments: ["csv_filenames_list", "common_id_column"]
                                   cell_content: 
@@ -117,7 +139,7 @@ decision_tree_preprocessing:
                                       df.head()
                           - else:
                             actions:
-                              - leaf_id: 6
+                              - leaf_id: 7
                                 cell_title: "Merge CSVs Partial Match"
                                 arguments: ["csv_filenames_list", "common_id_column"]
                                 cell_content:
@@ -131,7 +153,7 @@ decision_tree_preprocessing:
                           - if: All have same row count and ordered the same way
                             then:
                               actions:
-                                - leaf_id: 7
+                                - leaf_id: 8
                                   cell_title: "Multiple CSVs Without Join"
                                   arguments: ["csv_filenames_list"]
                                   cell_content:
@@ -141,7 +163,7 @@ decision_tree_preprocessing:
                           - if : Only some have common ID
                             then:
                               actions:
-                                - leaf_id: 8
+                                - leaf_id: 9
                                   cell_title: "Multiple CSVs Without Join"
                                   arguments: ["csv_filenames_list"]
                                   cell_content:
@@ -150,7 +172,7 @@ decision_tree_preprocessing:
                                         # Not supported yet
                           - else:
                             actions:
-                              - leaf_id: 9
+                              - leaf_id: 10
                                 cell_title: "Multiple CSVs Without Join"
                                 arguments: ["csv_filenames_list"]
                                 cell_content:
@@ -160,7 +182,7 @@ decision_tree_preprocessing:
               - if: Excel with multiple sheets
                 then:
                   actions:
-                    - leaf_id: 10
+                    - leaf_id: 11
                       cell_title: "Process Excel with Multiple Sheets"
                       arguments: []
                       cell_content: 
@@ -171,7 +193,7 @@ decision_tree_preprocessing:
               - if: Mixed formats (CSV + Excel)
                 then:
                   actions:
-                    - leaf_id: 11
+                    - leaf_id: 12
                       cell_title: "Mixed File Types Preprocessing"
                       arguments: ["csv_filenames_list"]
                       cell_content:
@@ -184,7 +206,7 @@ decision_tree_preprocessing:
         - if: JPEG format
           then:
             actions:
-              - leaf_id: 12
+              - leaf_id: 13
                 cell_title: "Process JPEG Images"
                 arguments: [image_folder]
                 cell_content: [...]
@@ -192,7 +214,7 @@ decision_tree_preprocessing:
         - if: PNG format
           then:
             actions:
-              - leaf_id: 13
+              - leaf_id: 14
                 cell_title: "Process PNG Images"
                 arguments: [image_folder]
                 cell_content: [...]
@@ -203,7 +225,7 @@ decision_tree_preprocessing:
         - if: Images mapped to tabular rows
           then:
             actions:
-              - leaf_id: 14
+              - leaf_id: 15
                 cell_title: "Multimodal Preprocessing"
                 arguments: [csv_filename, image_folder]
                 cell_content: [...]

@@ -1,0 +1,61 @@
+{
+    "1_one_csv": [
+        {
+            "has_several_csvs": false,
+            "csv_filename": "Datasets/Tabular/Binary_pred/dataset1_with_target.csv",
+            "has_common_id": true,
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2
+        },
+        {
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "wants_random_forest": true,
+            "wants_xgboost": true,
+            "wants_pytorch": true
+        }
+    ],
+    
+    "2_joinable_csvs": [
+        {
+            "has_several_csvs": true,
+            "number_of_csvs": 2,
+            "csv_filenames_list": ["Datasets/Tabular/Binary_pred/dataset1_with_target.csv", "Datasets/Tabular/Binary_pred/dataset2_features_only.csv"],
+            "has_common_id": true,
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2
+        },
+        {
+            "common_id_column": "ID",
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "wants_random_forest": true,
+            "wants_xgboost": true,
+            "wants_pytorch": true
+        }
+
+    ],
+    "1_csv_time_series": [
+        {
+            "has_several_csvs": false,
+            "csv_filename": "Datasets/Tabular/Time_series/dataset_time_series.csv",
+            "has_common_id": true,
+            "common_id_column": "ID",
+            "target_column": "Target",
+            "Multiclass classification": false
+        },
+        {
+            "common_id_column": "ID",
+            "target_column": "Target",
+            "Multiclass classification": false,
+            "wants_lstm": true
+        }
+    ]
+}
