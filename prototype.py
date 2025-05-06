@@ -225,9 +225,7 @@ def get_cells_for_leaf_id(decision_tree, leaf_id, form_type="preprocessing"):
     # Rechercher le nœud feuille dans l'arbre de décision
     leaf_node = find_leaf(decision_tree, leaf_id)
     
-    if leaf_node:
-        print(leaf_node)  # Debug - afficher le nœud trouvé
-        
+    if leaf_node:        
         # Sélectionner le formulaire approprié en fonction du type
         form_answers = form_answers_preprocessing if form_type == "preprocessing" else form_answers_modelling
         
