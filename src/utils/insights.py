@@ -38,7 +38,7 @@ def get_insights(df: pd.DataFrame, idx: int) -> str:
     except Exception as e:
         return f"Error getting insights from dataset {idx}: {str(e)}\n"
 
-def get_insights_and_answers(*dfs: pd.DataFrame) -> str:
+def get_insights_and_answers(*dfs: pd.DataFrame, dataset_style: str) -> str:
     """Gather insights from all datasets and form answers."""
     insights = ""
     for i, df in enumerate(dfs, 1):
@@ -46,15 +46,15 @@ def get_insights_and_answers(*dfs: pd.DataFrame) -> str:
         insights += "\n"
     
     # Add form answers
-    form_answers_preprocessing, _, _, _ = load_form_answers('A_1_one_csv')  # Default to first style
+    form_answers_preprocessing, _, _, _ = load_form_answers(dataset_style)
     insights += "User's form answers:\n"
     insights += str(form_answers_preprocessing)
     
     return insights
 
-def get_insights_for_modelling(insights: str) -> str:
+def get_insights_for_modelling(insights: str, dataset_style: str) -> str:
     """Prepare insights for the modelling phase."""
-    _, form_answers_modelling, _, _ = load_form_answers('A_1_one_csv')  # Default to first style
+    _, form_answers_modelling, _, _ = load_form_answers(dataset_style)
     insights_modelling = insights + "\n\nUser's form answers for modelling:\n"
     insights_modelling += str(form_answers_modelling)
     return insights_modelling 

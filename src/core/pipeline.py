@@ -84,7 +84,7 @@ class NotebookPipeline:
             
             # Get insights and form answers
             print("Extracting insights from data...")
-            insights = get_insights_and_answers(*dfs)
+            insights = get_insights_and_answers(*dfs, dataset_style=self.dataset_style)
             
             # Load decision trees
             print("Loading decision trees...")
@@ -93,7 +93,8 @@ class NotebookPipeline:
             # Preprocessing phase
             print("Consulting Mistral LLM for preprocessing decisions...")
             leaf = send_to_mistral(insights, tree_preprocessing, self.mistral_api_key, 
-                                 simulate=True, form_type="preprocessing")
+                                 simulate=True, form_type="preprocessing",
+                                 dataset_style=self.dataset_style)
             
             # Format preprocessing cells
             print("Formatting notebook cells based on Mistral's preprocessing decisions...")
@@ -101,12 +102,13 @@ class NotebookPipeline:
             
             # Modelling phase
             print("Getting new insights for Modelling...")
-            insights_modelling = get_insights_for_modelling(insights)
+            insights_modelling = get_insights_for_modelling(insights, dataset_style=self.dataset_style)
             
             print("Consulting Mistral LLM for Modelling decisions...")
             leaf_modelling = send_to_mistral(insights_modelling, tree_modelling, 
                                            self.mistral_api_key, simulate=True, 
-                                           form_type="modelling")
+                                           form_type="modelling",
+                                           dataset_style=self.dataset_style)
             
             # Create modelling cells
             print("Creating cells for Modelling...")

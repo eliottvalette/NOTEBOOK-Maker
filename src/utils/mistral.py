@@ -10,7 +10,7 @@ from .config import load_form_answers
 
 def send_to_mistral(insights: str, decision_tree: Dict[str, Any], 
                    mistral_api_key: str, simulate: bool = False, 
-                   form_type: str = "preprocessing") -> Dict[str, Any]:
+                   form_type: str = "preprocessing", dataset_style: str = None) -> Dict[str, Any]:
     """Send insights and decision tree to Mistral LLM for analysis."""
     try:
         # Format the decision tree as a readable string
@@ -58,8 +58,10 @@ def send_to_mistral(insights: str, decision_tree: Dict[str, Any],
             result = response.json()
             leaf_id_response = result["choices"][0]["message"]["content"].strip()
         else:
-            # Simulate response based on form type
-            _, _, leaf_id_preprocessing, leaf_id_modelling = load_form_answers('A_1_one_csv')
+            # Simulate response based on form type and dataset style
+            if dataset_style is None:
+                raise ValueError("dataset_style must be provided when simulate=True")
+            _, _, leaf_id_preprocessing, leaf_id_modelling = load_form_answers(dataset_style)
             leaf_id_response = leaf_id_preprocessing if form_type == "preprocessing" else leaf_id_modelling
         
         # Extract leaf_id
@@ -71,14 +73,14 @@ def send_to_mistral(insights: str, decision_tree: Dict[str, Any],
             raise ValueError(f"Could not extract leaf_id from response: {leaf_id_response}")
         
         # Get the actions for this leaf_id
-        return get_cells_for_leaf_id(decision_tree, leaf_id, form_type)
+        return get_cells_for_leaf_id(decision_tree, leaf_id, form_type, dataset_style)
         
     except Exception as e:
         print(f"Error communicating with Mistral API: {str(e)}")
         raise e
 
 def get_cells_for_leaf_id(decision_tree: Dict[str, Any], leaf_id: int, 
-                         form_type: str = "preprocessing") -> Dict[str, Any]:
+                         form_type: str = "preprocessing", dataset_style: str = None) -> Dict[str, Any]:
     """Find the actions corresponding to a specific leaf_id in the decision tree."""
     def find_leaf(node: Dict[str, Any], target_leaf_id: int) -> Dict[str, Any]:
         if isinstance(node, list):
@@ -101,7 +103,9 @@ def get_cells_for_leaf_id(decision_tree: Dict[str, Any], leaf_id: int,
     
     if leaf_node:
         # Get form answers
-        form_answers_preprocessing, form_answers_modelling, _, _ = load_form_answers('A_1_one_csv')
+        if dataset_style is None:
+            raise ValueError("dataset_style must be provided")
+        form_answers_preprocessing, form_answers_modelling, _, _ = load_form_answers(dataset_style)
         form_answers = form_answers_preprocessing if form_type == "preprocessing" else form_answers_modelling
         
         # Process arguments if present
