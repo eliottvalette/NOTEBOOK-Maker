@@ -185,13 +185,13 @@ decision_tree_preprocessing:
                                 df.head()
                             
                             - type: "code"
-                                content: |
-                                  # Display correlation matrix
-                                  corr_matrix = df.corr()
-                                  plt.figure(figsize=(12, 8))
-                                  sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
-                                  plt.title('Correlation Matrix')
-                                  plt.show()
+                              content: |
+                                # Display correlation matrix
+                                corr_matrix = df.corr()
+                                plt.figure(figsize=(12, 8))
+                                sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                plt.title('Correlation Matrix')
+                                plt.show()
 
                     - if: All have same row count
                       then:

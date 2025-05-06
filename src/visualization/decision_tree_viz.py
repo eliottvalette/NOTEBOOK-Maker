@@ -148,7 +148,8 @@ def visualize_decision_tree(decision_tree: str) -> bool:
                 add_nodes_edges(tree_data)
         
         # Create HTML file
-        output_file = f'decision_tree_{decision_tree}.html'
+        base_name = os.path.splitext(os.path.basename(decision_tree))[0]
+        output_file = f'decision_tree_{base_name}.html'
         
         # Extract nodes and edges
         nodes_data = []
@@ -304,5 +305,5 @@ def visualize_decision_tree(decision_tree: str) -> bool:
 
 if __name__ == "__main__":
     print("Generating interactive visualization of the decision tree...")
-    visualize_decision_tree('decision_tree_preprocessing.yaml')
-    visualize_decision_tree('decision_tree_modelling.yaml') 
+    visualize_decision_tree('src/trees/decision_tree_preprocessing.yaml')
+    visualize_decision_tree('src/trees/decision_tree_modelling.yaml') 
