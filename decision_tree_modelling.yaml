@@ -79,10 +79,31 @@ decision_tree_modelling:
                       plt.title('Confusion Matrix')
                       plt.show()
                       
-                      # Feature importance
-                      plt.figure(figsize=(12, 6))
-                      xgb.plot_importance(model, max_num_features=20)
-                      plt.title('Feature Importance')
+                      # Feature importance with better visualization
+                      plt.figure(figsize=(14, 8))
+                      
+                      # Get feature importance
+                      importance = model.get_score(importance_type='gain')
+                      features = list(importance.keys())
+                      scores = list(importance.values())
+                      
+                      # Sort by importance
+                      indices = np.argsort(scores)[-20:]  # Top 20 features
+                      
+                      # Create colorful horizontal bar chart
+                      colors = plt.cm.viridis(np.linspace(0, 0.9, len(indices)))
+                      plt.barh(range(len(indices)), [scores[i] for i in indices], color=colors)
+                      plt.yticks(range(len(indices)), [features[i] for i in indices])
+                      plt.xlabel('Importance (gain)')
+                      plt.ylabel('Features')
+                      plt.title(f'Top {min(20, len(features))} Feature Importance', fontsize=14, fontweight='bold')
+                      plt.grid(axis='x', linestyle='--', alpha=0.6)
+                      
+                      # Add values on bars
+                      for i, v in enumerate([scores[idx] for idx in indices]):
+                          plt.text(v + 0.1, i, f"{v:.2f}", va='center')
+                      
+                      plt.tight_layout()
                       plt.show()
                   
         - if: Regression

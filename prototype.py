@@ -25,7 +25,7 @@ import json
 
 load_dotenv()   
 mistral_api_key = os.getenv('MISTRAL_API_KEY')
-DATASET_STYLE = 'C_1_csv_time_series'
+DATASET_STYLE = 'A_1_one_csv'
 
 # Load datasets as if the User has submitted them
 def load_datasets():
