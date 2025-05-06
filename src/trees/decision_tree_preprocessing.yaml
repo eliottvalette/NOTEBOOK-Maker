@@ -41,7 +41,7 @@ decision_tree_preprocessing:
                                 # Display correlation matrix
                                 corr_matrix = df.corr()
                                 plt.figure(figsize=(12, 8))
-                                sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
                                 plt.title('Correlation Matrix')
                                 plt.show()
                                 
@@ -76,7 +76,7 @@ decision_tree_preprocessing:
                                   # Display correlation matrix
                                   corr_matrix = df.corr()
                                   plt.figure(figsize=(12, 8))
-                                  sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                  sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
                                   plt.title('Correlation Matrix')
                                   plt.show()
               - if: Excel
@@ -120,7 +120,7 @@ decision_tree_preprocessing:
                                   # Display correlation matrix
                                   corr_matrix = df.corr()
                                   plt.figure(figsize=(12, 8))
-                                  sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                  sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
                                   plt.title('Correlation Matrix')
                                   plt.show()
         - if: Multiple tables
@@ -189,7 +189,7 @@ decision_tree_preprocessing:
                                 # Display correlation matrix
                                 corr_matrix = df.corr()
                                 plt.figure(figsize=(12, 8))
-                                sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+                                sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
                                 plt.title('Correlation Matrix')
                                 plt.show()
 
