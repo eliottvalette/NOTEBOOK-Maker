@@ -29,6 +29,18 @@ def create_synthetic_datasets(n_samples=10_000, n_features=10, random_state=42):
                       columns=[f'Feature_{i+1}' for i in range(features_per_df)])
     df2 = pd.DataFrame(X_class[:, features_per_df:], 
                       columns=[f'Extra_Feature_{i+1}' for i in range(X_class.shape[1] - features_per_df)])
+
+    # Ajouter des colonnes catégorielles
+    # Pour df1
+    df1['Gender'] = np.random.choice(['M', 'F', 'Other'], size=n_samples, p=[0.45, 0.45, 0.1])
+    df1['Education_Level'] = np.random.choice(['High School', 'Bachelor', 'Master', 'PhD'], 
+                                            size=n_samples, p=[0.3, 0.4, 0.2, 0.1])
+    
+    # Pour df2
+    df2['Employment_Status'] = np.random.choice(['Employed', 'Unemployed', 'Self-employed', 'Student'], 
+                                              size=n_samples, p=[0.6, 0.1, 0.2, 0.1])
+    df2['Marital_Status'] = np.random.choice(['Single', 'Married', 'Divorced', 'Widowed'], 
+                                           size=n_samples, p=[0.4, 0.4, 0.15, 0.05])
     
     # Ajouter la target et l'ID
     df1['YTarget'] = y_class

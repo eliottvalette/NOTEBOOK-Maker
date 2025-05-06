@@ -22,10 +22,10 @@ import time
 import random
 from dotenv import load_dotenv
 import json
+import requests
 
 load_dotenv()   
 mistral_api_key = os.getenv('MISTRAL_API_KEY')
-DATASET_STYLE = 'A_1_one_csv'
 
 # Load datasets as if the User has submitted them
 def load_datasets():
@@ -36,14 +36,15 @@ def load_datasets():
     
     return [df1, df2]
 
-# Simulate the User's answers to the questions
-with open('answers_examples.json', 'r') as file:
-    form_answers_examples = json.load(file)
-    form_answers_preprocessing = form_answers_examples[DATASET_STYLE][0]
-    form_answers_modelling = form_answers_examples[DATASET_STYLE][1]
-    leaf_id_preprocessing = form_answers_examples[DATASET_STYLE][2]['leaf_id_preprocessing']
-    leaf_id_modelling = form_answers_examples[DATASET_STYLE][2]['leaf_id_modelling']
-
+def load_form_answers():
+    # Simulate the User's answers to the questions
+    with open('answers_examples.json', 'r') as file:
+        form_answers_examples = json.load(file)
+        form_answers_preprocessing = form_answers_examples[DATASET_STYLE][0]
+        form_answers_modelling = form_answers_examples[DATASET_STYLE][1]
+        leaf_id_preprocessing = form_answers_examples[DATASET_STYLE][2]['leaf_id_preprocessing']
+        leaf_id_modelling = form_answers_examples[DATASET_STYLE][2]['leaf_id_modelling']
+    return form_answers_preprocessing, form_answers_modelling, leaf_id_preprocessing, leaf_id_modelling
 # Get insights from the data
 def get_insights(df, idx):
     """Get insights from the data."""
@@ -84,6 +85,7 @@ def get_insights(df, idx):
 # Gather the insights from the datasets and form answers as a single string
 def get_insights_and_answers(df1, df2):
     """Gather the insights from the datasets and form answers as a single string."""
+    form_answers_preprocessing, form_answers_modelling, leaf_id_preprocessing, leaf_id_modelling = load_form_answers()
     insights = ""
     insights += get_insights(df1, 1)
     insights += "\n"
@@ -116,9 +118,9 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, fo
     Returns:
         list: Actions to perform based on the leaf node identified
     """
+    form_answers_preprocessing, form_answers_modelling, leaf_id_preprocessing, leaf_id_modelling = load_form_answers()
+    
     try:
-        import requests
-        import json
         
         # Endpoint for Mistral API
         url = "https://api.mistral.ai/v1/chat/completions"
@@ -202,6 +204,7 @@ def get_cells_for_leaf_id(decision_tree, leaf_id, form_type="preprocessing"):
     Returns:
         dict: The leaf node with cell_title and cell_content
     """
+    form_answers_preprocessing, form_answers_modelling, leaf_id_preprocessing, leaf_id_modelling = load_form_answers()
     # Parcourir récursivement l'arbre de décision pour trouver la feuille avec l'ID spécifié
     def find_leaf(node, target_leaf_id):
         if isinstance(node, list):
@@ -390,6 +393,8 @@ def get_insights_for_modelling(insights):
     Returns:
         str: Insights enrichis avec les réponses du formulaire de modélisation
     """
+
+    form_answers_preprocessing, form_answers_modelling, leaf_id_preprocessing, leaf_id_modelling = load_form_answers()
     # Garder les insights de base mais ajouter les réponses du formulaire de modélisation
     insights_modelling = insights + "\n\nUser's form answers for modelling:\n"
     insights_modelling += str(form_answers_modelling)
@@ -461,42 +466,35 @@ def main():
     # Load datasets (For test purposes, in the real pipeine, the user will submit the datasets and the form answers but it can have different format and number)
     print("Loading datasets...")
     dfs = load_datasets()
-    df1, df2 = dfs[0], dfs[1]
-    
+    df1, df2 = dfs[0], dfs[1]    
+
     # Get insights and form answers
     print("Extracting insights from data...")
     insights = get_insights_and_answers(df1, df2)
-    print('insights', insights)
     
     # Load decision tree
     print("Loading decision tree...")
     tree_preprocessing, tree_modelling = load_decision_tree()
-    print('decision_tree', tree_preprocessing)
     
     # Send to Mistral for preprocessing decisions
     print("Consulting Mistral LLM for preprocessing decisions...")
     leaf = send_to_mistral(insights, tree_preprocessing, mistral_api_key, simulate=True, form_type="preprocessing")
-    print('leaf', leaf)
 
     # Formatting notebook cells for preprocessing
     print("Formatting notebook cells based on Mistral's preprocessing decisions...")
     preprocessing_cells = format_notebook_cells(leaf)
-    print('preprocessing_cells', preprocessing_cells)
  
     # Get New insights for Modelling
     print("Getting new insights for Modelling...")
     insights_modelling = get_insights_for_modelling(insights)
-    print('insights_modelling', insights_modelling)
 
     # New call to Mistral for Modelling
     print("Consulting Mistral LLM for Modelling decisions...")
     leaf_modelling = send_to_mistral(insights_modelling, tree_modelling, mistral_api_key, simulate=True, form_type="modelling")
-    print('leaf_modelling', leaf_modelling)
 
     # Add cells for Modelling
     print("Creating cells for Modelling...")
     model_cells = modelling_cells(leaf_modelling)
-    print('model_cells', model_cells)
     
     # Combine all cells
     print("Combining preprocessing and modelling cells...")
@@ -513,4 +511,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    for dataset_style in ['A_1_one_csv', 'B_2_joinable_csvs', 'C_1_csv_time_series']:
+        DATASET_STYLE = dataset_style
+        main()
