@@ -25,6 +25,7 @@ import json
 
 load_dotenv()   
 mistral_api_key = os.getenv('MISTRAL_API_KEY')
+DATASET_STYLE = 'C_1_csv_time_series'
 
 # Load datasets as if the User has submitted them
 def load_datasets():
@@ -38,10 +39,10 @@ def load_datasets():
 # Simulate the User's answers to the questions
 with open('answers_examples.json', 'r') as file:
     form_answers_examples = json.load(file)
-    form_answers_preprocessing = form_answers_examples["1_one_csv"][0]
-    form_answers_modelling = form_answers_examples["1_one_csv"][1]
-    leaf_id_preprocessing = form_answers_examples["1_one_csv"][2]['leaf_id_preprocessing']
-    leaf_id_modelling = form_answers_examples["1_one_csv"][2]['leaf_id_modelling']
+    form_answers_preprocessing = form_answers_examples[DATASET_STYLE][0]
+    form_answers_modelling = form_answers_examples[DATASET_STYLE][1]
+    leaf_id_preprocessing = form_answers_examples[DATASET_STYLE][2]['leaf_id_preprocessing']
+    leaf_id_modelling = form_answers_examples[DATASET_STYLE][2]['leaf_id_modelling']
 
 # Get insights from the data
 def get_insights(df, idx):
@@ -167,9 +168,9 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, fo
         else : 
             # Simuler une réponse en fonction du type de formulaire
             if form_type == "preprocessing":
-                leaf_id_response = "1"  # Convertir en chaîne de caractères
+                leaf_id_response = leaf_id_preprocessing
             else:
-                leaf_id_response = "3"  # Pour le modelling
+                leaf_id_response = leaf_id_modelling
         
         # Extract the leaf_id (just the number)
         import re
@@ -179,8 +180,7 @@ def send_to_mistral(insights, decision_tree, mistral_api_key, simulate=False, fo
             print(f"Mistral identified leaf_id: {leaf_id}")
         else:
             print(f"Could not extract leaf_id from response: {leaf_id_response}")
-            # Default to leaf_id 2 (merge datasets) if extraction fails
-            leaf_id = 1 if form_type == "preprocessing" else 3
+            raise ValueError(f"Could not extract leaf_id from response: {leaf_id_response}")
         
         # Get the actions for this leaf_id
         cell_code = get_cells_for_leaf_id(decision_tree, leaf_id, form_type)
@@ -250,22 +250,7 @@ def get_cells_for_leaf_id(decision_tree, leaf_id, form_type="preprocessing"):
         return leaf_node
     else:
         print(f"Leaf node with ID {leaf_id} not found in the decision tree.")
-        # Retourner un nœud par défaut pour éviter les erreurs
-        return {
-            'leaf_id': leaf_id,
-            'cell_title': 'Default Analysis',
-            'arguments': [],
-            'cell_content': [
-                {
-                    'type': 'markdown',
-                    'content': '# Analyse par défaut\nAucun nœud correspondant trouvé dans l\'arbre de décision.'
-                },
-                {
-                    'type': 'code',
-                    'content': 'print("Affichage des premières lignes des datasets:")\nprint("\\ndf1:")\nprint(df1.head())\nprint("\\ndf2:")\nprint(df2.head())'
-                }
-            ]
-        }
+        raise ValueError(f"Leaf node with ID {leaf_id} not found in the decision tree.")
 
 def format_notebook_cells(leaf):
     """Format leaf information into notebook cells.
@@ -349,7 +334,6 @@ def create_and_execute_notebook(cells):
         notebook = new_notebook(cells=cells)
         
         # Définir le nom du fichier de sortie
-        timestamp = time.strftime("%Hh-%Mm-%Ss")
         output_dir = "Output"
         
         # Vérifier si le répertoire Output existe, sinon le créer
@@ -357,7 +341,7 @@ def create_and_execute_notebook(cells):
             os.makedirs(output_dir)
             print(f"Répertoire '{output_dir}' créé")
             
-        output_filename = f"{output_dir}/generated_notebook_{timestamp}.ipynb"
+        output_filename = f"{output_dir}/gen_{DATASET_STYLE}.ipynb"
         
         # Sauvegarder le notebook
         with open(output_filename, 'w', encoding='utf-8') as f:
@@ -377,7 +361,7 @@ def create_and_execute_notebook(cells):
             executed_nb = client.execute()
             
             # Sauvegarder le notebook exécuté
-            executed_filename = f"{output_dir}/executed_notebook_{timestamp}.ipynb"
+            executed_filename = f"{output_dir}/exe_{DATASET_STYLE}.ipynb"
             with open(executed_filename, 'w', encoding='utf-8') as f:
                 nbformat.write(executed_nb, f)
             

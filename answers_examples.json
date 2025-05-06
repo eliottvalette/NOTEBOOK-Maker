@@ -1,5 +1,5 @@
 {
-    "1_one_csv": [
+    "A_1_one_csv": [
         {
             "has_several_csvs": false,
             "csv_filename": "Datasets/Tabular/Binary_pred/dataset1_with_target.csv",
@@ -21,12 +21,12 @@
             "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
         },
         {
-            "leaf_id_preprocessing": 1,
-            "leaf_id_modelling": 1
+            "leaf_id_preprocessing": "1",
+            "leaf_id_modelling": "1"
         }
     ],
     
-    "2_joinable_csvs": [
+    "B_2_joinable_csvs": [
         {
             "has_several_csvs": true,
             "number_of_csvs": 2,
@@ -49,16 +49,17 @@
             "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
         },
         {
-            "leaf_id_preprocessing": 5,
-            "leaf_id_modelling": 1
+            "leaf_id_preprocessing": "5",
+            "leaf_id_modelling": "1"
         }
 
     ],
-    "1_csv_time_series": [
+    "C_1_csv_time_series": [
         {
             "has_several_csvs": false,
             "csv_filename": "Datasets/Tabular/Time_series/dataset_time_series.csv",
             "has_common_id": true,
+            "num_classes": 2,
             "common_id_column": "ID",
             "target_column": "Target",
             "Multiclass classification": false,
@@ -67,13 +68,14 @@
         {
             "common_id_column": "ID",
             "target_column": "Target",
+            "num_classes": 2,
             "Multiclass classification": false,
             "wants_lstm": true,
             "Natural_language": "I want to predict a time series, so I select Time series forecasting and LSTM."
         },
         {
-            "leaf_id_preprocessing": 1,
-            "leaf_id_modelling": 1
+            "leaf_id_preprocessing": "1",
+            "leaf_id_modelling": "3"
         }
     ]
 }

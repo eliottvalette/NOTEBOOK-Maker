@@ -278,7 +278,7 @@ decision_tree_modelling:
             actions:
               - leaf_id: 3
                 cell_title: "LSTM"
-                arguments: ['target_column']
+                arguments: ['num_classes', 'target_column']
                 cell_content:
                   - type: "code"
                     content: |

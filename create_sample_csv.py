@@ -105,6 +105,9 @@ def create_time_series_dataset(n_samples=10_000, n_features=10, random_state=42)
     # Drop Index 
     df = df.reset_index(drop=True)
 
+    # Drop first 10 rows
+    df = df.iloc[10:]
+
     # Create directory if it doesn't exist
     os.makedirs('Datasets/Tabular/Time_series', exist_ok=True)
     

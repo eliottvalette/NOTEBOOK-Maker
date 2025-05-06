@@ -124,15 +124,15 @@ decision_tree_preprocessing:
                                 print("Colonnes du DataFrame final:", df.columns.tolist())
                                 df.head()
                     - if: All have same row count
-                            then:
-                              actions:
-                                - leaf_id: 6
-                                  cell_title: "Merge CSVs By Concatenation"
-                                  arguments: ["csv_filenames_list"]
-                                  cell_content:
-                                    - type: "code"
-                                    content: |
-                                      # Not supported yet
+                      then:
+                        actions:
+                          - leaf_id: 6
+                            cell_title: "Merge CSVs By Concatenation"
+                            arguments: ["csv_filenames_list"]
+                            cell_content:
+                              - type: "code"
+                                content: |
+                                  # Not supported yet
                     - if: No common ID and not all have same row count
                       then:
                         actions:
