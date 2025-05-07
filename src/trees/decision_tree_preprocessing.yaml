@@ -15,6 +15,9 @@ decision_tree_preprocessing:
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
+                            - type: "markdown"
+                              content: |
+                                # Data Loading and Initial Exploration
                             - type: "code"
                               content: |
                                 # Load the dataset
@@ -24,7 +27,9 @@ decision_tree_preprocessing:
                                 print("Table shape:", df.shape)
                                 print("Column names:", df.columns.tolist())
                                 df.head()
-                            
+                            - type: "markdown"
+                              content: |
+                                # Categorical Data Encoding
                             - type: "code"
                               content: |
                                 # Transform categorical columns to numerical
@@ -34,23 +39,29 @@ decision_tree_preprocessing:
                                     le = LabelEncoder()
                                     df[col] = le.fit_transform(df[col])
                                     label_encoders[col] = le
+                                print("\nDataFrame after categorical encoding:")
                                 df.head()
-                            
+                            - type: "markdown"
+                              content: |
+                                # Correlation Analysis
+                                ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
                             - type: "code"
                               content: |
                                 # Display correlation matrix
-                                corr_matrix = df.corr()
+                                corr_matrix = df.corr().abs()
                                 plt.figure(figsize=(12, 8))
-                                sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
+                                sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
                                 plt.title('Correlation Matrix')
                                 plt.show()
-                                
                       else:
                         actions:
                           - leaf_id: 2
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
+                              - type: "markdown"
+                                content: |
+                                  # Data Loading and Initial Exploration
                               - type: "code"
                                 content: |
                                   # Load the dataset
@@ -59,7 +70,10 @@ decision_tree_preprocessing:
                                   # Display basic information
                                   print("Table shape:", df.shape)
                                   df.head()
-
+                              - type: "markdown"
+                                content: |
+                                  # Categorical Data Encoding
+                                  ### If no column contains categorical data, this cell will have no effects on the DataFrame
                               - type: "code"
                                 content: |
                                   # Transform categorical columns to numerical
@@ -69,14 +83,18 @@ decision_tree_preprocessing:
                                       le = LabelEncoder()
                                       df[col] = le.fit_transform(df[col])
                                       label_encoders[col] = le
+                                  print("\nDataFrame after categorical encoding:")
                                   df.head()
-                              
+                              - type: "markdown"
+                                content: |
+                                  # Correlation Analysis
+                                  ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
                               - type: "code"
                                 content: |
                                   # Display correlation matrix
-                                  corr_matrix = df.corr()
+                                  corr_matrix = df.corr().abs()
                                   plt.figure(figsize=(12, 8))
-                                  sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
+                                  sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
                                   plt.title('Correlation Matrix')
                                   plt.show()
               - if: Excel
@@ -94,6 +112,9 @@ decision_tree_preprocessing:
                             cell_title: "Process Excel Table"
                             arguments: ['excel_filename']
                             cell_content:
+                              - type: "markdown"
+                                content: |
+                                  # Excel Data Loading and Initial Exploration
                               - type: "code"
                                 content: |
                                   # Load the dataset
@@ -103,7 +124,9 @@ decision_tree_preprocessing:
                                   print("Table shape:", df.shape)
                                   print("Column names:", df.columns.tolist())
                                   df.head()
-
+                              - type: "markdown"
+                                content: |
+                                  # Categorical Data Encoding
                               - type: "code"
                                 content: |
                                   # Transform categorical columns to numerical
@@ -113,14 +136,18 @@ decision_tree_preprocessing:
                                       le = LabelEncoder()
                                       df[col] = le.fit_transform(df[col])
                                       label_encoders[col] = le
+                                  print("\nDataFrame after categorical encoding:")
                                   df.head()
-                              
+                              - type: "markdown"
+                                content: |
+                                  # Correlation Analysis
+                                  ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
                               - type: "code"
                                 content: |
                                   # Display correlation matrix
-                                  corr_matrix = df.corr()
+                                  corr_matrix = df.corr().abs()
                                   plt.figure(figsize=(12, 8))
-                                  sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
+                                  sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
                                   plt.title('Correlation Matrix')
                                   plt.show()
         - if: Multiple tables
@@ -136,6 +163,9 @@ decision_tree_preprocessing:
                             cell_title: "Merge CSVs on Common ID"
                             arguments: ["csv_filenames_list", "common_id_column"]
                             cell_content: 
+                            - type: "markdown"
+                              content: |
+                                # Loading Multiple CSV Files
                             - type: "code"
                               content: |
                                 # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
@@ -149,6 +179,9 @@ decision_tree_preprocessing:
                                 # Afficher la liste des DataFrames chargés
                                 list(dataframes.keys())
                                 
+                            - type: "markdown"
+                              content: |
+                                # Merging DataFrames on Common ID
                             - type: "code"
                               content: |
                                 # Fusionner tous les DataFrames sur la colonne d'ID commune
@@ -171,8 +204,11 @@ decision_tree_preprocessing:
                                 # Afficher des informations sur le DataFrame fusionné
                                 print("Shape du DataFrame final:", df.shape)
                                 print("Colonnes du DataFrame final:", df.columns.tolist())
+                                print("\nMerged DataFrame preview:")
                                 df.head()
-                            
+                            - type: "markdown"
+                              content: |
+                                # Categorical Data Encoding
                             - type: "code"
                               content: |
                                 # Transform categorical columns to numerical
@@ -182,17 +218,20 @@ decision_tree_preprocessing:
                                     le = LabelEncoder()
                                     df[col] = le.fit_transform(df[col])
                                     label_encoders[col] = le
+                                print("\nDataFrame after categorical encoding:")
                                 df.head()
-                            
+                            - type: "markdown"
+                              content: |
+                                # Correlation Analysis
+                                ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
                             - type: "code"
                               content: |
                                 # Display correlation matrix
-                                corr_matrix = df.corr()
+                                corr_matrix = df.corr().abs()
                                 plt.figure(figsize=(12, 8))
-                                sns.heatmap(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
+                                sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
                                 plt.title('Correlation Matrix')
                                 plt.show()
-
                     - if: All have same row count
                       then:
                         actions:

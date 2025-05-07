@@ -56,7 +56,6 @@ decision_tree_modelling:
                       eval_list = [(dtrain, 'train'), (dtest, 'eval')]
                       model = xgb.train(params, dtrain, num_rounds, eval_list,
                                      early_stopping_rounds=20, verbose_eval=100)
-
                   - type: "code"
                     content: |
                       # Make predictions
@@ -78,7 +77,8 @@ decision_tree_modelling:
                       plt.ylabel('True')
                       plt.title('Confusion Matrix')
                       plt.show()
-                      
+                  - type: "code"
+                    content: |
                       # Feature importance with better visualization
                       plt.figure(figsize=(14, 8))
                       
