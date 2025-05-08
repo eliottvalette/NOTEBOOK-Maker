@@ -150,7 +150,7 @@ def main():
     """Main entry point for the pipeline."""
     try:
         # Run pipeline for each dataset style
-        for dataset_style in ['A_1_one_csv', 'B_2_joinable_csvs']: #, 'C_1_csv_time_series']:
+        for dataset_style in ['A_1_one_csv', 'B_2_joinable_csvs', 'C_1_csv_time_series']:
             print(f"\nProcessing dataset style: {dataset_style}")
             pipeline = NotebookPipeline(dataset_style)
             pipeline.run()

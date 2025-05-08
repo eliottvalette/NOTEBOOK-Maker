@@ -108,28 +108,61 @@ def modelling_cells(leaf_modelling: Dict[str, Any]) -> List[Dict[str, Any]]:
         cell_content = [{'type': 'code', 'content': cell_content}]
     
     for cell in cell_content:
-        cell_type = cell.get('type', 'code')
-        content = cell.get('content', '')
-        
-        # Replace arguments with their values
-        if 'arg_values' in leaf_modelling:
-            for arg_name, arg_value in leaf_modelling['arg_values'].items():
-                if isinstance(arg_value, list):
-                    arg_value_str = repr(arg_value)
-                elif isinstance(arg_value, bool):
-                    arg_value_str = str(arg_value)
-                elif isinstance(arg_value, (int, float)):
-                    arg_value_str = str(arg_value)
-                else:
-                    arg_value_str = str(arg_value)
-                
-                content = content.replace(f"${arg_name}$", arg_value_str)
-        
-        # Create appropriate cell
-        if cell_type.lower() == 'markdown':
-            cells.append(new_markdown_cell(content))
+        # Handle both dictionary and list formats
+        if isinstance(cell, dict):
+            cell_type = cell.get('type', 'code')
+            content = cell.get('content', '')
+            
+            # Replace arguments with their values
+            if 'arg_values' in leaf_modelling:
+                for arg_name, arg_value in leaf_modelling['arg_values'].items():
+                    if isinstance(arg_value, list):
+                        arg_value_str = repr(arg_value)
+                    elif isinstance(arg_value, bool):
+                        arg_value_str = str(arg_value)
+                    elif isinstance(arg_value, (int, float)):
+                        arg_value_str = str(arg_value)
+                    else:
+                        arg_value_str = str(arg_value)
+                    
+                    content = content.replace(f"${arg_name}$", arg_value_str)
+            
+            # Create appropriate cell
+            if cell_type.lower() == 'markdown':
+                cells.append(new_markdown_cell(content))
+            else:
+                cells.append(new_code_cell(content))
         else:
-            cells.append(new_code_cell(content))
+            # If cell is a list (from YAML anchor), it should be a list of cells
+            if isinstance(cell, list):
+                for subcell in cell:
+                    if isinstance(subcell, dict):
+                        cell_type = subcell.get('type', 'code')
+                        content = subcell.get('content', '')
+                        
+                        # Replace arguments with their values
+                        if 'arg_values' in leaf_modelling:
+                            for arg_name, arg_value in leaf_modelling['arg_values'].items():
+                                if isinstance(arg_value, list):
+                                    arg_value_str = repr(arg_value)
+                                elif isinstance(arg_value, bool):
+                                    arg_value_str = str(arg_value)
+                                elif isinstance(arg_value, (int, float)):
+                                    arg_value_str = str(arg_value)
+                                else:
+                                    arg_value_str = str(arg_value)
+                                
+                                content = content.replace(f"${arg_name}$", arg_value_str)
+                        
+                        # Create appropriate cell
+                        if cell_type.lower() == 'markdown':
+                            cells.append(new_markdown_cell(content))
+                        else:
+                            cells.append(new_code_cell(content))
+            else:
+                # Handle string content
+                content = str(cell)
+                cells.append(new_code_cell(content))
     
     return cells
 
