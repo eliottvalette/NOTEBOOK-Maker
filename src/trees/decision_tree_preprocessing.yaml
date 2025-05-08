@@ -1,3 +1,124 @@
+# Common components
+components:
+  standard_imports: &standard_imports
+    - type: "code"
+      content: |
+        # Importation des bibliothèques nécessaires
+        import pandas as pd
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        
+        # Configuration pour afficher les graphiques dans le notebook
+        %matplotlib inline
+        plt.style.use('ggplot')
+        sns.set(style='whitegrid')
+
+  categorical_encoding: &categorical_encoding
+    - type: "markdown"
+      content: |
+        # Categorical Data Encoding
+    - type: "code"
+      content: |
+        # Transform categorical columns to numerical
+        from sklearn.preprocessing import LabelEncoder
+        label_encoders = {}
+        for col in df.select_dtypes(include=['object', 'category']).columns:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+            label_encoders[col] = le
+        print("\nDataFrame after categorical encoding:")
+        df.head()
+
+  correlation_analysis: &correlation_analysis
+    - type: "markdown"
+      content: |
+        # Correlation Analysis
+        ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
+    - type: "code"
+      content: |
+        # Display correlation matrix
+        corr_matrix = df.corr().abs()
+        plt.figure(figsize=(12, 8))
+        sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
+        plt.title('Correlation Matrix')
+        plt.show()
+
+  data_loading_csv: &data_loading_csv
+    - type: "markdown"
+      content: |
+        # Data Loading and Initial Exploration
+    - type: "code"
+      content: |
+        # Load the dataset
+        df = pd.read_csv('$csv_filename$')
+        
+        # Display basic information
+        print("Table shape:", df.shape)
+        print("Column names:", df.columns.tolist())
+        df.head()
+
+  data_loading_excel: &data_loading_excel
+    - type: "markdown"
+      content: |
+        # Excel Data Loading and Initial Exploration
+    - type: "code"
+      content: |
+        # Load the dataset
+        df = pd.read_excel('$excel_filename$')
+
+        # Display basic information
+        print("Table shape:", df.shape)
+        print("Column names:", df.columns.tolist())
+        df.head()
+
+  multiple_csv_loading: &multiple_csv_loading
+    - type: "markdown"
+      content: |
+        # Loading Multiple CSV Files
+    - type: "code"
+      content: |
+        # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
+        dataframes = {}
+
+        for csv_filename in $csv_filenames_list$:
+            dataframes[csv_filename] = pd.read_csv(csv_filename)
+            print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
+            print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
+        
+        # Afficher la liste des DataFrames chargés
+        list(dataframes.keys())
+
+  merge_on_common_id: &merge_on_common_id
+    - type: "markdown"
+      content: |
+        # Merging DataFrames on Common ID
+    - type: "code"
+      content: |
+        # Fusionner tous les DataFrames sur la colonne d'ID commune
+        merged_df = None
+        
+        for df_name, df in dataframes.items():
+            if "$common_id_column$" not in df.columns:
+                print(f"Attention: La colonne '$common_id_column$' n'est pas présente dans {df_name}")
+                continue
+                
+            if merged_df is None:
+                merged_df = df.copy()
+            else:
+                # Utiliser un suffixe pour éviter la duplication des noms de colonnes
+                merged_df = pd.merge(merged_df, df, on="$common_id_column$", how='outer', 
+                                    suffixes=('', f'_{df_name}'))
+        # Standardize merged df
+        df = merged_df
+
+        # Afficher des informations sur le DataFrame fusionné
+        print("Shape du DataFrame final:", df.shape)
+        print("Colonnes du DataFrame final:", df.columns.tolist())
+        print("\nMerged DataFrame preview:")
+        df.head()
+
+# Main decision tree
 decision_tree_preprocessing:
   - if: Tabular data only
     then:
@@ -15,88 +136,18 @@ decision_tree_preprocessing:
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
-                            - type: "markdown"
-                              content: |
-                                # Data Loading and Initial Exploration
-                            - type: "code"
-                              content: |
-                                # Load the dataset
-                                df = pd.read_csv('$csv_filename$')
-                                
-                                # Display basic information
-                                print("Table shape:", df.shape)
-                                print("Column names:", df.columns.tolist())
-                                df.head()
-                            - type: "markdown"
-                              content: |
-                                # Categorical Data Encoding
-                            - type: "code"
-                              content: |
-                                # Transform categorical columns to numerical
-                                from sklearn.preprocessing import LabelEncoder
-                                label_encoders = {}
-                                for col in df.select_dtypes(include=['object', 'category']).columns:
-                                    le = LabelEncoder()
-                                    df[col] = le.fit_transform(df[col])
-                                    label_encoders[col] = le
-                                print("\nDataFrame after categorical encoding:")
-                                df.head()
-                            - type: "markdown"
-                              content: |
-                                # Correlation Analysis
-                                ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
-                            - type: "code"
-                              content: |
-                                # Display correlation matrix
-                                corr_matrix = df.corr().abs()
-                                plt.figure(figsize=(12, 8))
-                                sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
-                                plt.title('Correlation Matrix')
-                                plt.show()
+                            - *data_loading_csv
+                            - *categorical_encoding
+                            - *correlation_analysis
                       else:
                         actions:
                           - leaf_id: 2
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
-                              - type: "markdown"
-                                content: |
-                                  # Data Loading and Initial Exploration
-                              - type: "code"
-                                content: |
-                                  # Load the dataset
-                                  df = pd.read_csv('$csv_filename$')
-                                  
-                                  # Display basic information
-                                  print("Table shape:", df.shape)
-                                  df.head()
-                              - type: "markdown"
-                                content: |
-                                  # Categorical Data Encoding
-                                  ### If no column contains categorical data, this cell will have no effects on the DataFrame
-                              - type: "code"
-                                content: |
-                                  # Transform categorical columns to numerical
-                                  from sklearn.preprocessing import LabelEncoder
-                                  label_encoders = {}
-                                  for col in df.select_dtypes(include=['object', 'category']).columns:
-                                      le = LabelEncoder()
-                                      df[col] = le.fit_transform(df[col])
-                                      label_encoders[col] = le
-                                  print("\nDataFrame after categorical encoding:")
-                                  df.head()
-                              - type: "markdown"
-                                content: |
-                                  # Correlation Analysis
-                                  ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
-                              - type: "code"
-                                content: |
-                                  # Display correlation matrix
-                                  corr_matrix = df.corr().abs()
-                                  plt.figure(figsize=(12, 8))
-                                  sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
-                                  plt.title('Correlation Matrix')
-                                  plt.show()
+                              - *data_loading_csv
+                              - *categorical_encoding
+                              - *correlation_analysis
               - if: Excel
                 then:
                   actions:
@@ -112,44 +163,9 @@ decision_tree_preprocessing:
                             cell_title: "Process Excel Table"
                             arguments: ['excel_filename']
                             cell_content:
-                              - type: "markdown"
-                                content: |
-                                  # Excel Data Loading and Initial Exploration
-                              - type: "code"
-                                content: |
-                                  # Load the dataset
-                                  df = pd.read_excel('$excel_filename$')
-
-                                  # Display basic information
-                                  print("Table shape:", df.shape)
-                                  print("Column names:", df.columns.tolist())
-                                  df.head()
-                              - type: "markdown"
-                                content: |
-                                  # Categorical Data Encoding
-                              - type: "code"
-                                content: |
-                                  # Transform categorical columns to numerical
-                                  from sklearn.preprocessing import LabelEncoder
-                                  label_encoders = {}
-                                  for col in df.select_dtypes(include=['object', 'category']).columns:
-                                      le = LabelEncoder()
-                                      df[col] = le.fit_transform(df[col])
-                                      label_encoders[col] = le
-                                  print("\nDataFrame after categorical encoding:")
-                                  df.head()
-                              - type: "markdown"
-                                content: |
-                                  # Correlation Analysis
-                                  ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
-                              - type: "code"
-                                content: |
-                                  # Display correlation matrix
-                                  corr_matrix = df.corr().abs()
-                                  plt.figure(figsize=(12, 8))
-                                  sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
-                                  plt.title('Correlation Matrix')
-                                  plt.show()
+                              - *data_loading_excel
+                              - *categorical_encoding
+                              - *correlation_analysis
         - if: Multiple tables
           then:
             actions:
@@ -163,75 +179,10 @@ decision_tree_preprocessing:
                             cell_title: "Merge CSVs on Common ID"
                             arguments: ["csv_filenames_list", "common_id_column"]
                             cell_content: 
-                            - type: "markdown"
-                              content: |
-                                # Loading Multiple CSV Files
-                            - type: "code"
-                              content: |
-                                # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
-                                dataframes = {}
-
-                                for csv_filename in $csv_filenames_list$:
-                                    dataframes[csv_filename] = pd.read_csv(csv_filename)
-                                    print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
-                                    print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
-                                
-                                # Afficher la liste des DataFrames chargés
-                                list(dataframes.keys())
-                                
-                            - type: "markdown"
-                              content: |
-                                # Merging DataFrames on Common ID
-                            - type: "code"
-                              content: |
-                                # Fusionner tous les DataFrames sur la colonne d'ID commune
-                                merged_df = None
-                                
-                                for df_name, df in dataframes.items():
-                                    if "$common_id_column$" not in df.columns:
-                                        print(f"Attention: La colonne '$common_id_column$' n'est pas présente dans {df_name}")
-                                        continue
-                                        
-                                    if merged_df is None:
-                                        merged_df = df.copy()
-                                    else:
-                                        # Utiliser un suffixe pour éviter la duplication des noms de colonnes
-                                        merged_df = pd.merge(merged_df, df, on="$common_id_column$", how='outer', 
-                                                            suffixes=('', f'_{df_name}'))
-                                # Standardize merged df
-                                df = merged_df
-
-                                # Afficher des informations sur le DataFrame fusionné
-                                print("Shape du DataFrame final:", df.shape)
-                                print("Colonnes du DataFrame final:", df.columns.tolist())
-                                print("\nMerged DataFrame preview:")
-                                df.head()
-                            - type: "markdown"
-                              content: |
-                                # Categorical Data Encoding
-                            - type: "code"
-                              content: |
-                                # Transform categorical columns to numerical
-                                from sklearn.preprocessing import LabelEncoder
-                                label_encoders = {}
-                                for col in df.select_dtypes(include=['object', 'category']).columns:
-                                    le = LabelEncoder()
-                                    df[col] = le.fit_transform(df[col])
-                                    label_encoders[col] = le
-                                print("\nDataFrame after categorical encoding:")
-                                df.head()
-                            - type: "markdown"
-                              content: |
-                                # Correlation Analysis
-                                ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
-                            - type: "code"
-                              content: |
-                                # Display correlation matrix
-                                corr_matrix = df.corr().abs()
-                                plt.figure(figsize=(12, 8))
-                                sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
-                                plt.title('Correlation Matrix')
-                                plt.show()
+                            - *multiple_csv_loading
+                            - *merge_on_common_id
+                            - *categorical_encoding
+                            - *correlation_analysis
                     - if: All have same row count
                       then:
                         actions:
