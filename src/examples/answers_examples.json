@@ -2,7 +2,7 @@
     "A_1_one_csv": [
         {
             "has_several_csvs": false,
-            "csv_filename": "Datasets/Tabular/Binary_pred/dataset1_with_target.csv",
+            "csv_filename": "Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv",
             "has_common_id": true,
             "common_id_column": "ID",
             "target_column": "YTarget",
@@ -30,7 +30,7 @@
         {
             "has_several_csvs": true,
             "number_of_csvs": 2,
-            "csv_filenames_list": ["Datasets/Tabular/Binary_pred/dataset1_with_target.csv", "Datasets/Tabular/Binary_pred/dataset2_features_only.csv"],
+            "csv_filenames_list": ["Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv", "Datasets/Tabular/Binary_pred/csv/dataset2_features_only.csv"],
             "has_common_id": true,
             "common_id_column": "ID",
             "target_column": "YTarget",
@@ -57,7 +57,7 @@
     "C_1_csv_time_series": [
         {
             "has_several_csvs": false,
-            "csv_filename": "Datasets/Tabular/Time_series/dataset_time_series.csv",
+            "csv_filename": "Datasets/Tabular/Time_series/csv/dataset_time_series.csv",
             "has_common_id": true,
             "num_classes": 2,
             "common_id_column": "ID",

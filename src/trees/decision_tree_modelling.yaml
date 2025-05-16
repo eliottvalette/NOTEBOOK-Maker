@@ -168,6 +168,55 @@ components:
                 x = self.fc4(x)
                 return x
 
+  time_series_preprocessing: &time_series_preprocessing
+    - type: "code"
+      content: |
+        # Check for any missing values
+        print(f"Missing values in dataset: {df.isna().sum().sum()}")
+
+        # Split into features and target
+        X = df.drop(columns=['$target_column$'])
+        y = df['$target_column$']
+
+        # Scale features
+        scaler_X = StandardScaler()
+        X_scaled = scaler_X.fit_transform(X)
+
+        # Scale target
+        y_mean = y.mean()
+        y_std = y.std()
+        print(f"Target statistics - Mean: {y_mean:.4f}, Std: {y_std:.4f}")
+        y_scaled = (y - y_mean) / y_std
+
+  create_sequences: &create_sequences
+    - type: "code"
+      content: |
+        def create_sequences(X, y, seq_length):
+            xs, ys = [], []
+            for i in range(len(X) - seq_length):
+                xs.append(X[i:i+seq_length])
+                ys.append(y[i+seq_length])
+            return np.array(xs), np.array(ys)
+
+        # Create sequences
+        seq_length = 10
+        X_seq, y_seq = create_sequences(X_scaled, y_scaled, seq_length)
+        print(f"Sequence shapes: X = {X_seq.shape}, y = {y_seq.shape}")
+
+        # Split into training and test sets
+        train_size = int(len(X_seq) * 0.8)
+        X_train, X_test = X_seq[:train_size], X_seq[train_size:]
+        y_train, y_test = y_seq[:train_size], y_seq[train_size:]
+
+        # Convert to PyTorch tensors
+        X_train_tensor = torch.FloatTensor(X_train)
+        y_train_tensor = torch.FloatTensor(y_train).reshape(-1, 1)
+        X_test_tensor = torch.FloatTensor(X_test)
+        y_test_tensor = torch.FloatTensor(y_test).reshape(-1, 1)
+
+        print(f"Training data: X = {X_train_tensor.shape}, y = {y_train_tensor.shape}")
+        print(f"Test data: X = {X_test_tensor.shape}, y = {y_test_tensor.shape}")
+
   lstm_model: &lstm_model
     - type: "code"
       content: |
@@ -204,28 +253,25 @@ components:
                 
                 return out
 
-  create_sequences: &create_sequences
+  lstm_training_setup: &lstm_training_setup
     - type: "code"
       content: |
-        def create_sequences(X, y, seq_length):
-            """
-            Create sequences for time series data.
-            
-            Args:
-                X (numpy.ndarray): Input features
-                y (numpy.ndarray): Target values
-                seq_length (int): Length of each sequence
-                
-            Returns:
-                tuple: (X_seq, y_seq) where:
-                    - X_seq: Sequences of input features
-                    - y_seq: Target values for each sequence
-            """
-            X_seq, y_seq = [], []
-            for i in range(len(X) - seq_length):
-                X_seq.append(X[i:(i + seq_length)])
-                y_seq.append(y[i + seq_length])
-            return np.array(X_seq), np.array(y_seq)
+        # Model configuration
+        input_size = X_train.shape[2]
+        hidden_size = 128
+        num_layers = 2
+        dropout = 0.2
+
+        # Create model and training components
+        model = LSTMModel(input_size, hidden_size, num_layers, dropout)
+        criterion = nn.MSELoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, patience=5)
+
+        # Create DataLoader
+        batch_size = 64
+        train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+        train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
   training_loop: &training_loop
     - type: "code"
@@ -269,7 +315,7 @@ components:
                 if val_loss < best_loss:
                     best_loss = val_loss
                     counter = 0
-                    torch.save(model.state_dict(), 'best_model.pth')
+                    torch.save(model.state_dict(), 'best_lstm_model.pth')
                 else:
                     counter += 1
             
@@ -281,7 +327,33 @@ components:
                 print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {val_loss.item():.4f}')
         
         # Load best model
-        model.load_state_dict(torch.load('best_model.pth'))
+        model.load_state_dict(torch.load('best_lstm_model.pth'))
+
+  plot_results: &plot_results
+    - type: "code"
+      content: |
+        # Plot results
+        plt.figure(figsize=(12, 5))
+
+        # Plot learning curve
+        plt.subplot(1, 2, 1)
+        plt.plot(train_losses)
+        plt.plot(val_losses)
+        plt.title('Learning Curve')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend(['Train', 'Validation'])
+
+        # Plot predictions vs actual
+        plt.subplot(1, 2, 2)
+        plt.scatter(y_test, y_pred, alpha=0.3)
+        plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
+        plt.title('Predictions vs Actual')
+        plt.xlabel('Actual')
+        plt.ylabel('Predicted')
+
+        plt.tight_layout()
+        plt.show()
 
 # Main decision tree
 decision_tree_modelling:
@@ -337,45 +409,10 @@ decision_tree_modelling:
                 arguments: ['target_column']
                 cell_content:
                   - *standard_imports
+                  - *time_series_preprocessing
                   - *create_sequences
-                  - type: "code"
-                    content: |
-                      # Prepare time series data
-                      seq_length = 10
-                      X = df.drop(columns=['$target_column$'])
-                      y = df['$target_column$']
-                      X_seq, y_seq = create_sequences(X, y, seq_length)
-                      
-                      # Split into training and test sets
-                      train_size = int(len(X_seq) * 0.8)
-                      X_train, X_test = X_seq[:train_size], X_seq[train_size:]
-                      y_train, y_test = y_seq[:train_size], y_seq[train_size:]
-                      
-                      # Convert to PyTorch tensors
-                      X_train_tensor = torch.FloatTensor(X_train)
-                      y_train_tensor = torch.FloatTensor(y_train).reshape(-1, 1)
-                      X_test_tensor = torch.FloatTensor(X_test)
-                      y_test_tensor = torch.FloatTensor(y_test).reshape(-1, 1)
                   - *lstm_model
-                  - type: "code"
-                    content: |
-                      # Model configuration
-                      input_size = X_train.shape[2]
-                      hidden_size = 128
-                      num_layers = 2
-                      dropout = 0.2
-                      
-                      # Create model and training components
-                      model = LSTMModel(input_size, hidden_size, num_layers, dropout)
-                      criterion = nn.MSELoss()
-                      optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
-                      scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, patience=5)
-                      
-                      # Create DataLoader
-                      batch_size = 64
-                      train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-                      train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+                  - *lstm_training_setup
                   - *training_loop
                   - *model_evaluation
-                  - *plot_learning_curve
-                  - *plot_predictions
+                  - *plot_results

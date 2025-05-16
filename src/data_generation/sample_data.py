@@ -71,15 +71,26 @@ def create_synthetic_datasets(n_samples: int = 10_000, n_features: int = 10,
     df1['ID'] = ids
     df2['ID'] = ids
 
-    # Save datasets
-    os.makedirs('Datasets/Tabular/Binary_pred', exist_ok=True)
-    df1.to_csv('Datasets/Tabular/Binary_pred/dataset1_with_target.csv', index=False)
-    df2.to_csv('Datasets/Tabular/Binary_pred/dataset2_features_only.csv', index=False)
+    for tabular_type in ['csv', 'excel', 'parquet', 'json']:    
+        os.makedirs(f'Datasets/Tabular/Binary_pred/{tabular_type}', exist_ok=True)
+    
+    # CSV
+    df1.to_csv(f'Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv', index=False)
+    df2.to_csv(f'Datasets/Tabular/Binary_pred/csv/dataset2_features_only.csv', index=False)
+
+    # Excel
+    df1.to_excel(f'Datasets/Tabular/Binary_pred/excel/dataset1_with_target.xlsx', index=False)
+    df2.to_excel(f'Datasets/Tabular/Binary_pred/excel/dataset2_features_only.xlsx', index=False)
+    
+    # Parquet
+    df1.to_parquet(f'Datasets/Tabular/Binary_pred/parquet/dataset1_with_target.parquet', index=False)
+    df2.to_parquet(f'Datasets/Tabular/Binary_pred/parquet/dataset2_features_only.parquet', index=False)
+
+    # JSON
+    df1.to_json(f'Datasets/Tabular/Binary_pred/json/dataset1_with_target.json', index=False)
+    df2.to_json(f'Datasets/Tabular/Binary_pred/json/dataset2_features_only.json', index=False)
 
     print(f"Datasets created successfully:")
-    print(f"- dataset1_with_target.csv: {df1.shape} (with target column 'YTarget')")
-    print(f"- dataset2_features_only.csv: {df2.shape}")
-
     return df1, df2
 
 
@@ -144,11 +155,15 @@ def create_time_series_dataset(n_samples: int = 10_000, n_features: int = 10,
     os.makedirs('Datasets/Tabular/Time_series', exist_ok=True)
     
     # Save dataset
-    df.to_csv('Datasets/Tabular/Time_series/dataset_time_series.csv', index=True)
-    
-    print(f"Time series dataset created successfully:")
-    print(f"- dataset_time_series.csv: {df.shape} (with target column 'Target')")
-    
+    for tabular_type in ['csv', 'excel', 'parquet', 'json']:
+        os.makedirs(f'Datasets/Tabular/Time_series/{tabular_type}', exist_ok=True)
+
+    df.to_csv(f'Datasets/Tabular/Time_series/csv/dataset_time_series.csv', index=True)
+    df.to_excel(f'Datasets/Tabular/Time_series/excel/dataset_time_series.xlsx', index=True)
+    df.to_parquet(f'Datasets/Tabular/Time_series/parquet/dataset_time_series.parquet', index=True)
+    df.to_json(f'Datasets/Tabular/Time_series/json/dataset_time_series.json', index=True)
+
+    print(f"Time series dataset created successfully:")    
     return df
 
 if __name__ == "__main__":
