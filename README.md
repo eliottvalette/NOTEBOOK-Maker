@@ -47,12 +47,3 @@ The system uses two primary decision trees:
 
 Each leaf node in the decision trees contains specific code templates that are assembled into a complete notebook.
 
-## Getting Started
-
-1. Clone this repository
-2. Install required dependencies (requirements file coming soon)
-3. Set up your Mistral API key in a `.env` file
-4. Run the prototype:
-   ```
-   python prototype.py
-   ```

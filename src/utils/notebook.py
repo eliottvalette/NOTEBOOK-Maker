@@ -13,22 +13,8 @@ def format_notebook_cells(leaf: Dict[str, Any]) -> List[Dict[str, Any]]:
     cells = []
     
     # Add title
-    title = leaf.get('cell_title', 'Analyse automatique')
+    title = leaf.get('cell_title', 'Automated AI Analysis')
     cells.append(new_markdown_cell(f"# {title}"))
-    
-    # Add standard imports
-    imports_cell = new_code_cell(
-        "# Importation des bibliothèques nécessaires\n"
-        "import pandas as pd\n"
-        "import numpy as np\n"
-        "import matplotlib.pyplot as plt\n"
-        "import seaborn as sns\n\n"
-        "# Configuration pour afficher les graphiques dans le notebook\n"
-        "%matplotlib inline\n"
-        "plt.style.use('ggplot')\n"
-        "sns.set(style='whitegrid')"
-    )
-    cells.append(imports_cell)
 
     # Process cell content
     cell_content = leaf.get('cell_content', [])

@@ -3,16 +3,135 @@ components:
   standard_imports: &standard_imports
     - type: "code"
       content: |
-        # Importation des bibliothèques nécessaires
+        # Import necessary libraries
         import pandas as pd
         import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
         
-        # Configuration pour afficher les graphiques dans le notebook
+        # Configuration to display graphs in the notebook
         %matplotlib inline
         plt.style.use('ggplot')
         sns.set(style='whitegrid')
+  
+  data_loading_csv: &data_loading_csv
+    - type: "markdown"
+      content: |
+        # Data Loading and Initial Exploration
+    - type: "code"
+      content: |
+        # Load the dataset
+        df = pd.read_csv('$csv_filename$')
+        
+        # Display basic information
+        print("Table shape:", df.shape)
+        print("Column names:", df.columns.tolist())
+        df.head()
+
+  data_loading_excel: &data_loading_excel
+    - type: "markdown"
+      content: |
+        # Excel Data Loading and Initial Exploration
+    - type: "code"
+      content: |
+        # Load the dataset
+        df = pd.read_excel('$excel_filename$')
+
+        # Display basic information
+        print("Table shape:", df.shape)
+        print("Column names:", df.columns.tolist())
+        df.head()
+    
+  data_loading_parquet: &data_loading_parquet
+    - type: "markdown"
+      content: |
+        # Parquet Data Loading and Initial Exploration
+    - type: "code"
+      content: |
+        # Load the Parquet dataset
+        df = pd.read_parquet('$parquet_filename$')
+
+        # Display basic information
+        print("Table shape:", df.shape)
+        print("Column names:", df.columns.tolist())
+        df.head()
+  
+  data_loading_json: &data_loading_json
+    - type: "markdown"
+      content: |
+        # JSON Data Loading and Initial Exploration
+    - type: "code"
+      content: |
+        # Load the JSON dataset
+        df = pd.read_json('$json_filename$', lines=True)  # set lines=False for pure JSON
+
+        # Display basic information
+        print("Table shape:", df.shape)
+        print("Column names:", df.columns.tolist())
+        df.head()
+    
+  data_loading_sql: &data_loading_sql
+    - type: "markdown"
+      content: |
+        # SQL Table Loading and Initial Exploration
+    - type: "code"
+      content: |
+        from sqlalchemy import create_engine
+
+        # e.g. engine = create_engine('postgresql://user:pass@host/dbname')
+        engine = create_engine('$sql_connection_string$')
+        df = pd.read_sql_table('$table_name$', con=engine)
+
+        print("Table shape:", df.shape)
+        print("Column names:", df.columns.tolist())
+        df.head()
+
+
+  multiple_csv_loading: &multiple_csv_loading
+    - type: "markdown"
+      content: |
+        # Loading Multiple CSV Files
+    - type: "code"
+      content: |
+        # Load all CSV files into a dictionary of DataFrames
+        dataframes = {}
+
+        for csv_filename in $csv_filenames_list$:
+            dataframes[csv_filename] = pd.read_csv(csv_filename)
+            print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
+            print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
+        
+        # Display the list of loaded DataFrames
+        list(dataframes.keys())
+
+  merge_on_common_id: &merge_on_common_id
+    - type: "markdown"
+      content: |
+        # Merging DataFrames on Common ID
+    - type: "code"
+      content: |
+        # Merge all DataFrames on the common ID column
+        merged_df = None
+        
+        for df_name, df in dataframes.items():
+            if "$common_id_column$" not in df.columns:
+                print(f"Warning: The column '$common_id_column$' is not present in {df_name}, this file will be ignored")
+                continue
+                
+            if merged_df is None:
+                merged_df = df.copy()
+            else:
+                # Use a suffix to avoid column name duplication
+                merged_df = pd.merge(merged_df, df, on="$common_id_column$", how='outer', 
+                                    suffixes=('', f'_{df_name}'))
+        # Standardize merged df
+        df = merged_df
+
+        # Display information about the merged DataFrame
+        print("Final DataFrame shape:", df.shape)
+        print("Final DataFrame columns:", df.columns.tolist())
+        print("\nMerged DataFrame preview:")
+        df.head()
 
   categorical_encoding: &categorical_encoding
     - type: "markdown"
@@ -43,80 +162,11 @@ components:
         sns.heatmap(corr_matrix, cmap='inferno', vmin=0, vmax=1)
         plt.title('Correlation Matrix')
         plt.show()
-
-  data_loading_csv: &data_loading_csv
-    - type: "markdown"
-      content: |
-        # Data Loading and Initial Exploration
-    - type: "code"
-      content: |
-        # Load the dataset
-        df = pd.read_csv('$csv_filename$')
         
-        # Display basic information
-        print("Table shape:", df.shape)
-        print("Column names:", df.columns.tolist())
-        df.head()
-
-  data_loading_excel: &data_loading_excel
-    - type: "markdown"
-      content: |
-        # Excel Data Loading and Initial Exploration
-    - type: "code"
-      content: |
-        # Load the dataset
-        df = pd.read_excel('$excel_filename$')
-
-        # Display basic information
-        print("Table shape:", df.shape)
-        print("Column names:", df.columns.tolist())
-        df.head()
-
-  multiple_csv_loading: &multiple_csv_loading
-    - type: "markdown"
-      content: |
-        # Loading Multiple CSV Files
-    - type: "code"
-      content: |
-        # Charger tous les fichiers CSV dans un dictionnaire de DataFrames
-        dataframes = {}
-
-        for csv_filename in $csv_filenames_list$:
-            dataframes[csv_filename] = pd.read_csv(csv_filename)
-            print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
-            print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
         
-        # Afficher la liste des DataFrames chargés
-        list(dataframes.keys())
 
-  merge_on_common_id: &merge_on_common_id
-    - type: "markdown"
-      content: |
-        # Merging DataFrames on Common ID
-    - type: "code"
-      content: |
-        # Fusionner tous les DataFrames sur la colonne d'ID commune
-        merged_df = None
-        
-        for df_name, df in dataframes.items():
-            if "$common_id_column$" not in df.columns:
-                print(f"Attention: La colonne '$common_id_column$' n'est pas présente dans {df_name}")
-                continue
-                
-            if merged_df is None:
-                merged_df = df.copy()
-            else:
-                # Utiliser un suffixe pour éviter la duplication des noms de colonnes
-                merged_df = pd.merge(merged_df, df, on="$common_id_column$", how='outer', 
-                                    suffixes=('', f'_{df_name}'))
-        # Standardize merged df
-        df = merged_df
 
-        # Afficher des informations sur le DataFrame fusionné
-        print("Shape du DataFrame final:", df.shape)
-        print("Colonnes du DataFrame final:", df.columns.tolist())
-        print("\nMerged DataFrame preview:")
-        df.head()
+
 
 # Main decision tree
 decision_tree_preprocessing:
@@ -136,15 +186,17 @@ decision_tree_preprocessing:
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
-                            - *data_loading_csv
-                            - *categorical_encoding
-                            - *correlation_analysis
+                              - *standard_imports
+                              - *data_loading_csv
+                              - *categorical_encoding
+                              - *correlation_analysis
                       else:
                         actions:
                           - leaf_id: 2
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
                             cell_content:
+                              - *standard_imports
                               - *data_loading_csv
                               - *categorical_encoding
                               - *correlation_analysis
@@ -163,9 +215,46 @@ decision_tree_preprocessing:
                             cell_title: "Process Excel Table"
                             arguments: ['excel_filename']
                             cell_content:
+                              - *standard_imports
                               - *data_loading_excel
                               - *categorical_encoding
                               - *correlation_analysis
+              - if: Parquet
+                then:
+                  actions:
+                    - leaf_id: 5
+                      cell_title: "Process Parquet Table"
+                      arguments: ['parquet_filename']
+                      cell_content:
+                        - *standard_imports
+                        - *data_loading_parquet
+                        - *categorical_encoding
+                        - *correlation_analysis
+
+              - if: JSON
+                then:
+                  actions:
+                    - leaf_id: 6
+                      cell_title: "Process JSON Table"
+                      arguments: ['json_filename']
+                      cell_content:
+                        - *standard_imports
+                        - *data_loading_json
+                        - *categorical_encoding
+                        - *correlation_analysis
+
+              - if: SQL
+                then:
+                  actions:
+                    - leaf_id: 7
+                      cell_title: "Process SQL Table"
+                      arguments: ['sql_connection_string', 'table_name']
+                      cell_content:
+                        - *standard_imports
+                        - *data_loading_sql
+                        - *categorical_encoding
+                        - *correlation_analysis
+
         - if: Multiple tables
           then:
             actions:
@@ -175,31 +264,38 @@ decision_tree_preprocessing:
                     - if: Can join on common ID
                       then:
                         actions:
-                          - leaf_id: 5
+                          - leaf_id: 8
                             cell_title: "Merge CSVs on Common ID"
                             arguments: ["csv_filenames_list", "common_id_column"]
                             cell_content: 
-                            - *multiple_csv_loading
-                            - *merge_on_common_id
-                            - *categorical_encoding
-                            - *correlation_analysis
+                              - *standard_imports
+                              - *multiple_csv_loading
+                              - *merge_on_common_id
+                              - *categorical_encoding
+                              - *correlation_analysis
                     - if: All have same row count
                       then:
                         actions:
-                          - leaf_id: 6
+                          - leaf_id: 9
                             cell_title: "Merge CSVs By Concatenation"
                             arguments: ["csv_filenames_list"]
                             cell_content:
+                              - *standard_imports
+                              - *multiple_csv_loading
+                              - *merge_on_common_id
+                              - *categorical_encoding
+                              - *correlation_analysis
                               - type: "code"
                                 content: |
                                   # Not supported yet
                     - if: No common ID and not all have same row count
                       then:
                         actions:
-                          - leaf_id: 7
+                          - leaf_id: 10
                             cell_title: "Multiple CSVs Without Join Possible"
                             arguments: ["csv_filenames_list"]
                             cell_content:
+                              - *standard_imports
                               - type: "markdown"
                                 content: |
                                   # Not supported yet
@@ -207,10 +303,11 @@ decision_tree_preprocessing:
               - if: Excel with multiple sheets
                 then:
                   actions:
-                    - leaf_id: 8
+                    - leaf_id: 11
                       cell_title: "Process Excel with Multiple Sheets"
                       arguments: []
                       cell_content: 
+                        - *standard_imports
                         - type: "markdown"
                           content: |
                             # Not supported Yet
@@ -218,10 +315,11 @@ decision_tree_preprocessing:
               - if: Mixed formats (CSV + Excel)
                 then:
                   actions:
-                    - leaf_id: 9
+                    - leaf_id: 12
                       cell_title: "Mixed File Types Preprocessing"
                       arguments: ["csv_filenames_list"]
                       cell_content:
+                        - *standard_imports
                         - type: "markdown"
                           content: |
                             # Not supported Yet
@@ -231,7 +329,7 @@ decision_tree_preprocessing:
         - if: JPEG format
           then:
             actions:
-              - leaf_id: 10
+              - leaf_id: 13
                 cell_title: "Process JPEG Images"
                 arguments: [image_folder]
                 cell_content: [...]
@@ -239,7 +337,7 @@ decision_tree_preprocessing:
         - if: PNG format
           then:
             actions:
-              - leaf_id: 11
+              - leaf_id: 14
                 cell_title: "Process PNG Images"
                 arguments: [image_folder]
                 cell_content: [...]
@@ -250,8 +348,8 @@ decision_tree_preprocessing:
         - if: Images mapped to tabular rows
           then:
             actions:
-              - leaf_id: 12
+              - leaf_id: 15
                 cell_title: "Multimodal Preprocessing"
                 arguments: [csv_filename, image_folder]
                 cell_content: [...]
-                
+              
