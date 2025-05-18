@@ -13,9 +13,9 @@ src_path = str(Path(__file__).parent.parent.parent)
 if src_path not in sys.path:
     sys.path.append(src_path)
 
-from src.utils.config import load_decision_tree, load_form_answers
+from src.utils.config import load_decision_trees, load_form_answers
 from src.utils.insights import get_insights_and_answers, get_insights_for_modelling
-from src.utils.mistral import send_to_mistral
+from src.utils.mistral_calls import send_to_mistral
 from src.utils.notebook import format_notebook_cells, modelling_cells, create_and_execute_notebook
 
 class NotebookPipeline:
@@ -38,7 +38,7 @@ class NotebookPipeline:
         try:
             if self.dataset_style == 'A_1_one_csv':
                 # Single CSV with target
-                df_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'dataset1_with_target.csv'
+                df_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset1_with_target.csv'
                 if not df_path.exists():
                     raise FileNotFoundError(f"Dataset file not found: {df_path}")
                 df = pd.read_csv(df_path)
@@ -46,8 +46,8 @@ class NotebookPipeline:
                 
             elif self.dataset_style == 'B_2_joinable_csvs':
                 # Two joinable CSVs
-                df1_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'dataset1_with_target.csv'
-                df2_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'dataset2_features_only.csv'
+                df1_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset1_with_target.csv'
+                df2_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset2_features_only.csv'
                 
                 if not df1_path.exists():
                     raise FileNotFoundError(f"Dataset file not found: {df1_path}")
@@ -60,7 +60,7 @@ class NotebookPipeline:
                 
             elif self.dataset_style == 'C_1_csv_time_series':
                 # Time series CSV
-                df_path = self.datasets_dir / 'Tabular' / 'Time_series' / 'dataset_time_series.csv'
+                df_path = self.datasets_dir / 'Tabular' / 'Time_series' / 'csv' / 'dataset_time_series.csv'
                 if not df_path.exists():
                     raise FileNotFoundError(f"Dataset file not found: {df_path}")
                 df = pd.read_csv(df_path)
@@ -88,7 +88,7 @@ class NotebookPipeline:
             
             # Load decision trees
             print("Loading decision trees...")
-            tree_preprocessing, tree_modelling = load_decision_tree()
+            tree_preprocessing, tree_modelling = load_decision_trees()
             
             # Preprocessing phase
             print("Consulting Mistral LLM for preprocessing decisions...")
@@ -144,7 +144,7 @@ class NotebookPipeline:
             
         except Exception as e:
             print(f"Error in pipeline execution: {str(e)}")
-            return False
+            raise e
 
 def main():
     """Main entry point for the pipeline."""
@@ -157,7 +157,7 @@ def main():
             
     except Exception as e:
         print(f"Error in main execution: {str(e)}")
-        return False
+        raise e
 
 if __name__ == "__main__":
     main() 

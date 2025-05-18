@@ -6,7 +6,7 @@ import yaml
 import json
 from typing import Dict, Any, Tuple
 
-def load_decision_tree() -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def load_decision_trees() -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Load both decision trees from YAML files."""
     with open('src/trees/decision_tree_preprocessing.yaml', 'r') as file:
         tree_preprocessing = yaml.safe_load(file)

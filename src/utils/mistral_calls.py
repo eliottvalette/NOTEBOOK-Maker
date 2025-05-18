@@ -3,9 +3,9 @@ Utilities for interacting with the Mistral API.
 """
 
 import json
-import requests
 import re
 from typing import Dict, Any, List
+from mistralai import Mistral
 from .config import load_form_answers
 
 def send_to_mistral(insights: str, decision_tree: Dict[str, Any], 
@@ -18,7 +18,7 @@ def send_to_mistral(insights: str, decision_tree: Dict[str, Any],
         
         # Create the system prompt
         system_prompt = """You are an assistant specialized in data analysis.
-                        Your task is to analyze the information about a dataset and determine the appropriate leaf_id
+                        Your task is to analyze the information about a dataset and the user's form answers and determine the appropriate leaf_id
                         by following the provided decision tree. You must only respond with the leaf_id number, nothing else."""
         
         # Create the user prompt
@@ -29,38 +29,26 @@ def send_to_mistral(insights: str, decision_tree: Dict[str, Any],
                         Based on this information, what is the appropriate leaf_id? Respond only with the number."""
         
         if not simulate:
-            # Prepare API request
-            headers = {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "Authorization": f"Bearer {mistral_api_key}"
-            }
+            # Initialize Mistral client
+            client = Mistral(api_key=mistral_api_key)
             
-            payload = {
-                "model": "mistral-large-latest",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "temperature": 0.0,
-                "max_tokens": 10
-            }
+            # Prepare messages
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
             
             # Send request to Mistral API
-            response = requests.post(
-                "https://api.mistral.ai/v1/chat/completions",
-                headers=headers,
-                json=payload
+            response = client.chat.complete(
+                model="mistral-small-latest",
+                messages=messages,
+                temperature=0.0,
+                max_tokens=10
             )
-            response.raise_for_status()
             
             # Parse response
-            result = response.json()
-            leaf_id_response = result["choices"][0]["message"]["content"].strip()
+            leaf_id_response = response.choices[0].message.content.strip()
         else:
-            # Simulate response based on form type and dataset style
-            if dataset_style is None:
-                raise ValueError("dataset_style must be provided when simulate=True")
             _, _, leaf_id_preprocessing, leaf_id_modelling = load_form_answers(dataset_style)
             leaf_id_response = leaf_id_preprocessing if form_type == "preprocessing" else leaf_id_modelling
         

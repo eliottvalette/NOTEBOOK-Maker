@@ -1,0 +1,1 @@
+- Add mistral checkings during the insights
