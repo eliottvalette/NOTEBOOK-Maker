@@ -91,7 +91,6 @@ components:
         print("Column names:", df.columns.tolist())
         df.head()
 
-
   multiple_csv_loading: &multiple_csv_loading
     - type: "markdown"
       content: |

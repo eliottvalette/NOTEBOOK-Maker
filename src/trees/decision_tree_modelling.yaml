@@ -31,6 +31,18 @@ components:
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
         X_test_scaled = scaler.transform(X_test)
+  tensor_conversion: &tensor_conversion
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Tensor Conversion <span style='color:#F1A424'>|</span></b>
+        Converting the data into PyTorch tensors.
+    - type: "code"
+      content: |
+        # Convert data to PyTorch tensors
+        X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32)
+        y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32).reshape(-1, 1)
+        X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32)
+        y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).reshape(-1, 1)
 
   model_evaluation: &model_evaluation
     - type: "markdown"
@@ -416,28 +428,87 @@ decision_tree_modelling:
   - if: Tabular data only
     then:
       actions:
+        - if: Binary classification
+          then:
+            actions:
+              - if: Neural Network
+                then:
+                  actions:
+                    - leaf_id: 1
+                      cell_title: "Neural Network"
+                      arguments: ['target_column']
+                      cell_content:
+                        - *standard_imports
+                        - *data_preparation
+                        - *tensor_conversion
+                        - *neural_net_model
+                        - type: "code"
+                          content: |
+                            # Initialize model and training components
+                            input_size = X_train.shape[1]
+                            model = NeuralNetModel(input_size)
+                            criterion = nn.MSELoss()
+                            optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+                            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
+                            
+                            # Create DataLoader
+                            train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+                            batch_size = 64
+                            train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+                        - *training_loop
+                        - *model_evaluation
+                        - type: "code"
+                          content: |
+                            # Convert y_pred to numpy and threshold at 0.5
+                            y_pred_labels = (y_pred > 0.5).cpu().numpy().astype(int)
+                            y_true = y_test.values.astype(int)
+                            
+                            cm = confusion_matrix(y_true, y_pred_labels)
+                            plt.figure(figsize=(6, 5))
+                            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+                            plt.xlabel('Predicted')
+                            plt.ylabel('True')
+                            plt.title('Confusion Matrix')
+                            plt.show()
+                        - *plot_learning_curve
+              - if: XGBoost
+                then:
+                  actions:
+                  - leaf_id: 2
+                    cell_title: "XGBoost"
+                    arguments: ['num_classes', 'target_column']
+                    cell_content:
+                      - *standard_imports
+                      - *data_preparation
+                      - *xgboost_model
+                      - *xgboost_training
+                      - *xgboost_visualization
         - if: Multiclass classification
           then:
             actions:
-              - leaf_id: 1
-                cell_title: "Random Forest"
-                arguments: ['num_classes', 'target_column']
-                cell_content:
-                  - *standard_imports
-                  - *data_preparation
-                  - *xgboost_model
-                  - *xgboost_training
-                  - *xgboost_visualization
-
+              - if: XGBoost
+                then:
+                  actions:
+                  - leaf_id: 3
+                    cell_title: "XGBoost"
+                    arguments: ['num_classes', 'target_column']
+                    cell_content:
+                      - *standard_imports
+                      - *data_preparation
+                      - *xgboost_model
+                      - *xgboost_training
+                      - *xgboost_visualization
+                      
         - if: Regression
           then:
             actions:
-              - leaf_id: 2
+              - leaf_id: 4
                 cell_title: "Neural Network"
                 arguments: ['target_column']
                 cell_content:
                   - *standard_imports
                   - *data_preparation
+                  - *tensor_conversion
                   - *neural_net_model
                   - type: "code"
                     content: |
@@ -460,7 +531,7 @@ decision_tree_modelling:
         - if: Time series forecasting
           then:
             actions:
-              - leaf_id: 3
+              - leaf_id: 5
                 cell_title: "LSTM"
                 arguments: ['target_column']
                 cell_content:

@@ -104,7 +104,7 @@ class NotebookPipeline:
                                    decision_tree = tree_preprocessing, 
                                    nocode_decision_tree = tree_preprocessing_nocode,
                                    mistral_api_key = self.mistral_api_key, 
-                                   simulate = True, 
+                                   simulate = False, 
                                    form_type = "preprocessing",
                                    dataset_style = self.dataset_style)
             
@@ -121,7 +121,7 @@ class NotebookPipeline:
                                              decision_tree=tree_modelling, 
                                              nocode_decision_tree=tree_modelling_nocode, 
                                              mistral_api_key=self.mistral_api_key, 
-                                             simulate=True, 
+                                             simulate=False, 
                                              form_type="modelling",
                                              dataset_style=self.dataset_style)
             
