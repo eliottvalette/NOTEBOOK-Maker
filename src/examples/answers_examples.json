@@ -8,7 +8,7 @@
             "target_column": "YTarget",
             "Multiclass classification": true,
             "num_classes": 2,
-            "Natural_language": "I have only one csv file, named dataset1_with_target.csv, and it has a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2."
+            "Natural_language": "I have only one csv file, named dataset1_with_target.csv, and it has a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Binary classification and set the number of classes to 2."
         },
         {
             "common_id_column": "ID",
@@ -19,7 +19,7 @@
             "wants_xgboost": false,
             "wants_neural_network": true,
             "wants_pytorch": true,
-            "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
+            "Natural_language": "I want to predict a binary target, so I select Binary classification and set the number of classes to 2. I also want to use A Neural Network, and PyTorch."
         },
         {
             "leaf_id_preprocessing": "1",

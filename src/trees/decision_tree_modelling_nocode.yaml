@@ -1,28 +1,46 @@
-
-
-# Main decision tree
 decision_tree_modelling:
   - if: Tabular data only
     then:
       actions:
+        - if: Binary classification
+          then:
+            actions:
+              - if: Neural Network
+                then:
+                  actions:
+                    - leaf_id: 1
+                      cell_title: "Neural Network"
+                      arguments: ['target_column']
+                      
+              - if: XGBoost
+                then:
+                  actions:
+                  - leaf_id: 2
+                    cell_title: "XGBoost"
+                    arguments: ['num_classes', 'target_column']
+
         - if: Multiclass classification
           then:
             actions:
-              - leaf_id: 1
-                cell_title: "Random Forest"
-                arguments: ['num_classes', 'target_column']
+              - if: XGBoost
+                then:
+                  actions:
+                  - leaf_id: 3
+                    cell_title: "XGBoost"
+                    arguments: ['num_classes', 'target_column']
 
+                      
         - if: Regression
           then:
             actions:
-              - leaf_id: 2
+              - leaf_id: 4
                 cell_title: "Neural Network"
                 arguments: ['target_column']
-
+                
 
         - if: Time series forecasting
           then:
             actions:
-              - leaf_id: 3
+              - leaf_id: 5
                 cell_title: "LSTM"
                 arguments: ['target_column']
