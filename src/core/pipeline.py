@@ -65,6 +65,14 @@ class NotebookPipeline:
                     raise FileNotFoundError(f"Dataset file not found: {df_path}")
                 df = pd.read_csv(df_path)
                 return [df]
+            
+            elif self.dataset_style == 'test':
+                # Test dataset
+                df_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'excel' / 'dataset1_with_target.xlsx'
+                if not df_path.exists():
+                    raise FileNotFoundError(f"Dataset file not found: {df_path}")
+                df = pd.read_excel(df_path)
+                return [df]
                 
             else:
                 raise ValueError(f"Unknown dataset style: {self.dataset_style}")
@@ -88,13 +96,17 @@ class NotebookPipeline:
             
             # Load decision trees
             print("Loading decision trees...")
-            tree_preprocessing, tree_modelling = load_decision_trees()
+            tree_preprocessing, tree_preprocessing_nocode, tree_modelling, tree_modelling_nocode = load_decision_trees()
             
             # Preprocessing phase
             print("Consulting Mistral LLM for preprocessing decisions...")
-            leaf = send_to_mistral(insights, tree_preprocessing, self.mistral_api_key, 
-                                 simulate=True, form_type="preprocessing",
-                                 dataset_style=self.dataset_style)
+            leaf = send_to_mistral(insights = insights, 
+                                   decision_tree = tree_preprocessing, 
+                                   nocode_decision_tree = tree_preprocessing_nocode,
+                                   mistral_api_key = self.mistral_api_key, 
+                                   simulate = True, 
+                                   form_type = "preprocessing",
+                                   dataset_style = self.dataset_style)
             
             # Format preprocessing cells
             print("Formatting notebook cells based on Mistral's preprocessing decisions...")
@@ -105,10 +117,13 @@ class NotebookPipeline:
             insights_modelling = get_insights_for_modelling(insights, dataset_style=self.dataset_style)
             
             print("Consulting Mistral LLM for Modelling decisions...")
-            leaf_modelling = send_to_mistral(insights_modelling, tree_modelling, 
-                                           self.mistral_api_key, simulate=True, 
-                                           form_type="modelling",
-                                           dataset_style=self.dataset_style)
+            leaf_modelling = send_to_mistral(insights=insights_modelling, 
+                                             decision_tree=tree_modelling, 
+                                             nocode_decision_tree=tree_modelling_nocode, 
+                                             mistral_api_key=self.mistral_api_key, 
+                                             simulate=True, 
+                                             form_type="modelling",
+                                             dataset_style=self.dataset_style)
             
             # Create modelling cells
             print("Creating cells for Modelling...")
@@ -132,7 +147,8 @@ class NotebookPipeline:
                 cells=all_cells,
                 output_dir=str(self.output_dir),
                 gen_filename=gen_filename,
-                exe_filename=exe_filename
+                exe_filename=exe_filename,
+                execute=True
             )
             
             if success:

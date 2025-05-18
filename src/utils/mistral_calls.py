@@ -8,13 +8,17 @@ from typing import Dict, Any, List
 from mistralai import Mistral
 from .config import load_form_answers
 
-def send_to_mistral(insights: str, decision_tree: Dict[str, Any], 
-                   mistral_api_key: str, simulate: bool = False, 
-                   form_type: str = "preprocessing", dataset_style: str = None) -> Dict[str, Any]:
+def send_to_mistral(insights: str, 
+                    decision_tree: Dict[str, Any], 
+                    nocode_decision_tree: Dict[str, Any],
+                    mistral_api_key: str, 
+                    simulate: bool = False, 
+                    form_type: str = "preprocessing", 
+                    dataset_style: str = None) -> Dict[str, Any]:
     """Send insights and decision tree to Mistral LLM for analysis."""
     try:
         # Format the decision tree as a readable string
-        decision_tree_str = json.dumps(decision_tree, indent=2)
+        nocode_decision_tree_str = json.dumps(nocode_decision_tree, indent=2)
         
         # Create the system prompt
         system_prompt = """You are an assistant specialized in data analysis.
@@ -25,7 +29,7 @@ def send_to_mistral(insights: str, decision_tree: Dict[str, Any],
         user_prompt = f"""Here is the information about the data to analyze:
                         {insights}
                         And here is the decision tree to follow:
-                        {decision_tree_str}
+                        {nocode_decision_tree_str}
                         Based on this information, what is the appropriate leaf_id? Respond only with the number."""
         
         if not simulate:
@@ -61,7 +65,11 @@ def send_to_mistral(insights: str, decision_tree: Dict[str, Any],
             raise ValueError(f"Could not extract leaf_id from response: {leaf_id_response}")
         
         # Get the actions for this leaf_id
-        return get_cells_for_leaf_id(decision_tree, leaf_id, form_type, dataset_style)
+        leaf = get_cells_for_leaf_id(decision_tree=decision_tree, 
+                                      leaf_id=leaf_id, 
+                                      form_type=form_type, 
+                                      dataset_style=dataset_style)
+        return leaf
         
     except Exception as e:
         print(f"Error communicating with Mistral API: {str(e)}")
@@ -91,8 +99,6 @@ def get_cells_for_leaf_id(decision_tree: Dict[str, Any], leaf_id: int,
     
     if leaf_node:
         # Get form answers
-        if dataset_style is None:
-            raise ValueError("dataset_style must be provided")
         form_answers_preprocessing, form_answers_modelling, _, _ = load_form_answers(dataset_style)
         form_answers = form_answers_preprocessing if form_type == "preprocessing" else form_answers_modelling
         

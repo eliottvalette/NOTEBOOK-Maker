@@ -11,13 +11,9 @@ from typing import List, Dict, Any
 def format_notebook_cells(leaf: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Format leaf information into notebook cells."""
     cells = []
-    
-    # Add title
-    title = leaf.get('cell_title', 'Automated AI Analysis')
-    cells.append(new_markdown_cell(f"# {title}"))
 
     # Process cell content
-    cell_content = leaf.get('cell_content', [])
+    cell_content = leaf.get('cell_content', []) # gets the content of the cell from the leaf, if not provided, it will be an empty list
     if not isinstance(cell_content, list):
         cell_content = [{'type': 'code', 'content': cell_content}]
     
@@ -83,10 +79,6 @@ def format_notebook_cells(leaf: Dict[str, Any]) -> List[Dict[str, Any]]:
 def modelling_cells(leaf_modelling: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Format cells for the modelling phase."""
     cells = []
-    
-    # Add modelling title
-    title = leaf_modelling.get('cell_title', 'Modélisation')
-    cells.append(new_markdown_cell(f"# {title}"))
     
     # Process cell content
     cell_content = leaf_modelling.get('cell_content', [])
@@ -155,7 +147,8 @@ def modelling_cells(leaf_modelling: Dict[str, Any]) -> List[Dict[str, Any]]:
 def create_and_execute_notebook(cells: List[Dict[str, Any]], 
                               output_dir: str = "Output",
                               gen_filename: str = "gen_notebook.ipynb",
-                              exe_filename: str = "executed_notebook.ipynb") -> bool:
+                              exe_filename: str = "executed_notebook.ipynb",
+                              execute: bool = True) -> bool:
     """Create and execute a notebook with the given cells.
     
     Args:
@@ -187,29 +180,31 @@ def create_and_execute_notebook(cells: List[Dict[str, Any]],
         print(f"Notebook created and saved as: {gen_path}")
         
         # Execute notebook
-        print("Executing notebook...")
-        try:
-            client = nbclient.NotebookClient(
-                notebook,
-                timeout=600,
-                kernel_name='python3',
-                resources={'path': '.'}
-            )
-            executed_nb = client.execute()
-            
-            # Save executed notebook
-            with open(exe_path, 'w', encoding='utf-8') as f:
-                nbformat.write(executed_nb, f)
-            
-            print(f"Notebook executed and results saved as: {exe_path}")
-            return True
-            
-        except Exception as exec_error:
-            print(f"Error executing notebook: {str(exec_error)}")
-            print("Notebook was generated but could not be executed automatically.")
-            print(f"You can manually execute the notebook: {gen_path}")
-            return False
+        if execute:
+            print("Executing notebook...")
+            try:
+                client = nbclient.NotebookClient(
+                    notebook,
+                    timeout=600,
+                    kernel_name='python3',
+                    resources={'path': '.'}
+                )
+                executed_nb = client.execute()
+                
+                # Save executed notebook
+                with open(exe_path, 'w', encoding='utf-8') as f:
+                    nbformat.write(executed_nb, f)
+                
+                print(f"Notebook executed and results saved as: {exe_path}")
+                
+            except Exception as exec_error:
+                print(f"Error executing notebook: {str(exec_error)}")
+                print("Notebook was generated but could not be executed automatically.")
+                print(f"You can manually execute the notebook: {gen_path}")
+                raise exec_error
+        
+        return True
     
     except Exception as e:
         print(f"Error creating notebook: {str(e)}")
-        return False 
+        raise e

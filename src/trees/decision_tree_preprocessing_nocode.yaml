@@ -15,21 +15,13 @@ decision_tree_preprocessing:
                           - leaf_id: 1
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
-                            cell_content:
-                              - *standard_imports
-                              - *data_loading_csv
-                              - *categorical_encoding
-                              - *correlation_analysis
+
                       else:
                         actions:
                           - leaf_id: 2
                             cell_title: "Process Single Table"
                             arguments: ['csv_filename']
-                            cell_content:
-                              - *standard_imports
-                              - *data_loading_csv
-                              - *categorical_encoding
-                              - *correlation_analysis
+
               - if: Excel
                 then:
                   actions:
@@ -44,22 +36,14 @@ decision_tree_preprocessing:
                           - leaf_id: 4
                             cell_title: "Process Excel Table"
                             arguments: ['excel_filename']
-                            cell_content:
-                              - *standard_imports
-                              - *data_loading_excel
-                              - *categorical_encoding
-                              - *correlation_analysis
+
               - if: Parquet
                 then:
                   actions:
                     - leaf_id: 5
                       cell_title: "Process Parquet Table"
                       arguments: ['parquet_filename']
-                      cell_content:
-                        - *standard_imports
-                        - *data_loading_parquet
-                        - *categorical_encoding
-                        - *correlation_analysis
+
 
               - if: JSON
                 then:
@@ -67,11 +51,7 @@ decision_tree_preprocessing:
                     - leaf_id: 6
                       cell_title: "Process JSON Table"
                       arguments: ['json_filename']
-                      cell_content:
-                        - *standard_imports
-                        - *data_loading_json
-                        - *categorical_encoding
-                        - *correlation_analysis
+
 
               - if: SQL
                 then:
@@ -79,11 +59,7 @@ decision_tree_preprocessing:
                     - leaf_id: 7
                       cell_title: "Process SQL Table"
                       arguments: ['sql_connection_string', 'table_name']
-                      cell_content:
-                        - *standard_imports
-                        - *data_loading_sql
-                        - *categorical_encoding
-                        - *correlation_analysis
+
 
         - if: Multiple tables
           then:
@@ -97,38 +73,21 @@ decision_tree_preprocessing:
                           - leaf_id: 8
                             cell_title: "Merge CSVs on Common ID"
                             arguments: ["csv_filenames_list", "common_id_column"]
-                            cell_content: 
-                              - *standard_imports
-                              - *multiple_csv_loading
-                              - *merge_on_common_id
-                              - *categorical_encoding
-                              - *correlation_analysis
+
                     - if: All have same row count
                       then:
                         actions:
                           - leaf_id: 9
                             cell_title: "Merge CSVs By Concatenation"
                             arguments: ["csv_filenames_list"]
-                            cell_content:
-                              - *standard_imports
-                              - *multiple_csv_loading
-                              - *merge_on_common_id
-                              - *categorical_encoding
-                              - *correlation_analysis
-                              - type: "code"
-                                content: |
-                                  # Not supported yet
+
                     - if: No common ID and not all have same row count
                       then:
                         actions:
                           - leaf_id: 10
                             cell_title: "Multiple CSVs Without Join Possible"
                             arguments: ["csv_filenames_list"]
-                            cell_content:
-                              - *standard_imports
-                              - type: "markdown"
-                                content: |
-                                  # Not supported yet
+
 
               - if: Excel with multiple sheets
                 then:
@@ -136,11 +95,7 @@ decision_tree_preprocessing:
                     - leaf_id: 11
                       cell_title: "Process Excel with Multiple Sheets"
                       arguments: []
-                      cell_content: 
-                        - *standard_imports
-                        - type: "markdown"
-                          content: |
-                            # Not supported Yet
+
 
               - if: Mixed formats (CSV + Excel)
                 then:
@@ -148,11 +103,7 @@ decision_tree_preprocessing:
                     - leaf_id: 12
                       cell_title: "Mixed File Types Preprocessing"
                       arguments: ["csv_filenames_list"]
-                      cell_content:
-                        - *standard_imports
-                        - type: "markdown"
-                          content: |
-                            # Not supported Yet
+
   - if: Images only
     then:
       actions:
@@ -162,7 +113,7 @@ decision_tree_preprocessing:
               - leaf_id: 13
                 cell_title: "Process JPEG Images"
                 arguments: [image_folder]
-                cell_content: [...]
+
 
         - if: PNG format
           then:
@@ -170,7 +121,7 @@ decision_tree_preprocessing:
               - leaf_id: 14
                 cell_title: "Process PNG Images"
                 arguments: [image_folder]
-                cell_content: [...]
+
 
   - if: Images and tabular data
     then:
@@ -181,5 +132,4 @@ decision_tree_preprocessing:
               - leaf_id: 15
                 cell_title: "Multimodal Preprocessing"
                 arguments: [csv_filename, image_folder]
-                cell_content: [...]
               

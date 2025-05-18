@@ -11,12 +11,6 @@ decision_tree_modelling:
               - leaf_id: 1
                 cell_title: "Random Forest"
                 arguments: ['num_classes', 'target_column']
-                cell_content:
-                  - *standard_imports
-                  - *data_preparation
-                  - *xgboost_model
-                  - *xgboost_training
-                  - *xgboost_visualization
 
         - if: Regression
           then:
@@ -24,27 +18,7 @@ decision_tree_modelling:
               - leaf_id: 2
                 cell_title: "Neural Network"
                 arguments: ['target_column']
-                cell_content:
-                  - *standard_imports
-                  - *data_preparation
-                  - *neural_net_model
-                  - type: "code"
-                    content: |
-                      # Initialize model and training components
-                      input_size = X_train.shape[1]
-                      model = NeuralNetModel(input_size)
-                      criterion = nn.MSELoss()
-                      optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
-                      scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5)
-                      
-                      # Create DataLoader
-                      train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-                      batch_size = 64
-                      train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-                  - *training_loop
-                  - *model_evaluation
-                  - *plot_learning_curve
-                  - *plot_predictions
+
 
         - if: Time series forecasting
           then:
@@ -52,12 +26,3 @@ decision_tree_modelling:
               - leaf_id: 3
                 cell_title: "LSTM"
                 arguments: ['target_column']
-                cell_content:
-                  - *standard_imports
-                  - *time_series_preprocessing
-                  - *create_sequences
-                  - *lstm_model
-                  - *lstm_training_setup
-                  - *training_loop
-                  - *model_evaluation
-                  - *plot_results

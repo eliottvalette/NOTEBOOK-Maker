@@ -87,8 +87,8 @@ def create_synthetic_datasets(n_samples: int = 10_000, n_features: int = 10,
     df2.to_parquet(f'Datasets/Tabular/Binary_pred/parquet/dataset2_features_only.parquet', index=False)
 
     # JSON
-    df1.to_json(f'Datasets/Tabular/Binary_pred/json/dataset1_with_target.json', index=False)
-    df2.to_json(f'Datasets/Tabular/Binary_pred/json/dataset2_features_only.json', index=False)
+    df1.to_json(f'Datasets/Tabular/Binary_pred/json/dataset1_with_target.json', orient='records', lines=True, index=False)
+    df2.to_json(f'Datasets/Tabular/Binary_pred/json/dataset2_features_only.json', orient='records', lines=True, index=False)
 
     print(f"Datasets created successfully:")
     return df1, df2
@@ -161,7 +161,7 @@ def create_time_series_dataset(n_samples: int = 10_000, n_features: int = 10,
     df.to_csv(f'Datasets/Tabular/Time_series/csv/dataset_time_series.csv', index=True)
     df.to_excel(f'Datasets/Tabular/Time_series/excel/dataset_time_series.xlsx', index=True)
     df.to_parquet(f'Datasets/Tabular/Time_series/parquet/dataset_time_series.parquet', index=True)
-    df.to_json(f'Datasets/Tabular/Time_series/json/dataset_time_series.json', index=True)
+    df.to_json(f'Datasets/Tabular/Time_series/json/dataset_time_series.json', orient='records', lines=True, index=False)
 
     print(f"Time series dataset created successfully:")    
     return df

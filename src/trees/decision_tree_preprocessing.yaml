@@ -17,11 +17,12 @@ components:
   data_loading_csv: &data_loading_csv
     - type: "markdown"
       content: |
-        # Data Loading and Initial Exploration
+        # <b><span style='color:#F1A424'>|</span> Data Loading and Initial Exploration <span style='color:#F1A424'>|</span></b>
+        Load your dataset and get a first look at its structure and contents.
     - type: "code"
       content: |
         # Load the dataset
-        df = pd.read_csv('$csv_filename$')
+        df = pd.read_csv('$filename$')
         
         # Display basic information
         print("Table shape:", df.shape)
@@ -31,11 +32,12 @@ components:
   data_loading_excel: &data_loading_excel
     - type: "markdown"
       content: |
-        # Excel Data Loading and Initial Exploration
+        # <b><span style='color:#F1A424'>|</span> Excel Data Loading and Initial Exploration <span style='color:#F1A424'>|</span></b>
+        Load your Excel file and preview its structure and columns.
     - type: "code"
       content: |
         # Load the dataset
-        df = pd.read_excel('$excel_filename$')
+        df = pd.read_excel('$filename$')
 
         # Display basic information
         print("Table shape:", df.shape)
@@ -45,11 +47,12 @@ components:
   data_loading_parquet: &data_loading_parquet
     - type: "markdown"
       content: |
-        # Parquet Data Loading and Initial Exploration
+        # <b><span style='color:#F1A424'>|</span> Parquet Data Loading and Initial Exploration <span style='color:#F1A424'>|</span></b>
+        Load your Parquet file and examine its basic properties.
     - type: "code"
       content: |
         # Load the Parquet dataset
-        df = pd.read_parquet('$parquet_filename$')
+        df = pd.read_parquet('$filename$')
 
         # Display basic information
         print("Table shape:", df.shape)
@@ -59,11 +62,12 @@ components:
   data_loading_json: &data_loading_json
     - type: "markdown"
       content: |
-        # JSON Data Loading and Initial Exploration
+        # <b><span style='color:#F1A424'>|</span> JSON Data Loading and Initial Exploration <span style='color:#F1A424'>|</span></b>
+        Load your JSON data and inspect its structure and columns.
     - type: "code"
       content: |
         # Load the JSON dataset
-        df = pd.read_json('$json_filename$', lines=True)  # set lines=False for pure JSON
+        df = pd.read_json('$filename$', lines=True)  # set lines=False for pure JSON
 
         # Display basic information
         print("Table shape:", df.shape)
@@ -73,7 +77,8 @@ components:
   data_loading_sql: &data_loading_sql
     - type: "markdown"
       content: |
-        # SQL Table Loading and Initial Exploration
+        # <b><span style='color:#F1A424'>|</span> SQL Table Loading and Initial Exploration <span style='color:#F1A424'>|</span></b>
+        Connect to your SQL database and load a table for analysis.
     - type: "code"
       content: |
         from sqlalchemy import create_engine
@@ -90,13 +95,14 @@ components:
   multiple_csv_loading: &multiple_csv_loading
     - type: "markdown"
       content: |
-        # Loading Multiple CSV Files
+        # <b><span style='color:#F1A424'>|</span> Loading Multiple CSV Files <span style='color:#F1A424'>|</span></b>
+        Load several CSV files at once and review their basic information.
     - type: "code"
       content: |
         # Load all CSV files into a dictionary of DataFrames
         dataframes = {}
 
-        for csv_filename in $csv_filenames_list$:
+        for csv_filename in $filenames_list$:
             dataframes[csv_filename] = pd.read_csv(csv_filename)
             print(f"Table {csv_filename} shape: {dataframes[csv_filename].shape}")
             print(f"Column names: {dataframes[csv_filename].columns.tolist()}")
@@ -107,7 +113,8 @@ components:
   merge_on_common_id: &merge_on_common_id
     - type: "markdown"
       content: |
-        # Merging DataFrames on Common ID
+        # <b><span style='color:#F1A424'>|</span> Merging DataFrames on Common ID <span style='color:#F1A424'>|</span></b>
+        Combine multiple tables into one by joining on a shared identifier column.
     - type: "code"
       content: |
         # Merge all DataFrames on the common ID column
@@ -136,7 +143,8 @@ components:
   categorical_encoding: &categorical_encoding
     - type: "markdown"
       content: |
-        # Categorical Data Encoding
+        # <b><span style='color:#F1A424'>|</span> Categorical Data Encoding <span style='color:#F1A424'>|</span></b>
+        Convert categorical variables into numeric codes for analysis.
     - type: "code"
       content: |
         # Transform categorical columns to numerical
@@ -152,8 +160,9 @@ components:
   correlation_analysis: &correlation_analysis
     - type: "markdown"
       content: |
-        # Correlation Analysis
-        ### We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step
+        # <b><span style='color:#F1A424'>|</span> Correlation Analysis <span style='color:#F1A424'>|</span></b>
+        Analyze the relationships between features to inform feature selection.
+        We are using the absolute value of the correlation matrix to get insight on the magnitude of the correlation between the features, as the sign of the correlation is not important for the feature selection step.
     - type: "code"
       content: |
         # Display correlation matrix
@@ -163,10 +172,6 @@ components:
         plt.title('Correlation Matrix')
         plt.show()
         
-        
-
-
-
 
 # Main decision tree
 decision_tree_preprocessing:
@@ -184,7 +189,7 @@ decision_tree_preprocessing:
                         actions:
                           - leaf_id: 1
                             cell_title: "Process Single Table"
-                            arguments: ['csv_filename']
+                            arguments: ['filename']
                             cell_content:
                               - *standard_imports
                               - *data_loading_csv
@@ -194,7 +199,7 @@ decision_tree_preprocessing:
                         actions:
                           - leaf_id: 2
                             cell_title: "Process Single Table"
-                            arguments: ['csv_filename']
+                            arguments: ['filename']
                             cell_content:
                               - *standard_imports
                               - *data_loading_csv
@@ -213,7 +218,7 @@ decision_tree_preprocessing:
                         actions:
                           - leaf_id: 4
                             cell_title: "Process Excel Table"
-                            arguments: ['excel_filename']
+                            arguments: ['filename']
                             cell_content:
                               - *standard_imports
                               - *data_loading_excel
@@ -224,7 +229,7 @@ decision_tree_preprocessing:
                   actions:
                     - leaf_id: 5
                       cell_title: "Process Parquet Table"
-                      arguments: ['parquet_filename']
+                      arguments: ['filename']
                       cell_content:
                         - *standard_imports
                         - *data_loading_parquet
@@ -236,7 +241,7 @@ decision_tree_preprocessing:
                   actions:
                     - leaf_id: 6
                       cell_title: "Process JSON Table"
-                      arguments: ['json_filename']
+                      arguments: ['filename']
                       cell_content:
                         - *standard_imports
                         - *data_loading_json
@@ -266,7 +271,7 @@ decision_tree_preprocessing:
                         actions:
                           - leaf_id: 8
                             cell_title: "Merge CSVs on Common ID"
-                            arguments: ["csv_filenames_list", "common_id_column"]
+                            arguments: ["filenames_list", "common_id_column"]
                             cell_content: 
                               - *standard_imports
                               - *multiple_csv_loading
@@ -278,7 +283,7 @@ decision_tree_preprocessing:
                         actions:
                           - leaf_id: 9
                             cell_title: "Merge CSVs By Concatenation"
-                            arguments: ["csv_filenames_list"]
+                            arguments: ["filenames_list"]
                             cell_content:
                               - *standard_imports
                               - *multiple_csv_loading
@@ -293,7 +298,7 @@ decision_tree_preprocessing:
                         actions:
                           - leaf_id: 10
                             cell_title: "Multiple CSVs Without Join Possible"
-                            arguments: ["csv_filenames_list"]
+                            arguments: ["filenames_list"]
                             cell_content:
                               - *standard_imports
                               - type: "markdown"
@@ -317,7 +322,7 @@ decision_tree_preprocessing:
                   actions:
                     - leaf_id: 12
                       cell_title: "Mixed File Types Preprocessing"
-                      arguments: ["csv_filenames_list"]
+                      arguments: ["filenames_list"]
                       cell_content:
                         - *standard_imports
                         - type: "markdown"
@@ -331,7 +336,7 @@ decision_tree_preprocessing:
             actions:
               - leaf_id: 13
                 cell_title: "Process JPEG Images"
-                arguments: [image_folder]
+                arguments: ["image_folder"]
                 cell_content: [...]
 
         - if: PNG format
@@ -339,7 +344,7 @@ decision_tree_preprocessing:
             actions:
               - leaf_id: 14
                 cell_title: "Process PNG Images"
-                arguments: [image_folder]
+                arguments: ["image_folder"]
                 cell_content: [...]
 
   - if: Images and tabular data
@@ -350,6 +355,6 @@ decision_tree_preprocessing:
             actions:
               - leaf_id: 15
                 cell_title: "Multimodal Preprocessing"
-                arguments: [csv_filename, image_folder]
+                arguments: ["filename", "image_folder"]
                 cell_content: [...]
               

@@ -18,6 +18,10 @@ components:
         from torch.utils.data import TensorDataset, DataLoader
 
   data_preparation: &data_preparation
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Data Preparation and Splitting <span style='color:#F1A424'>|</span></b>
+        Splitting the data into training and test sets, and normalizing the features.
     - type: "code"
       content: |
         # Split and preprocess the data
@@ -29,6 +33,10 @@ components:
         X_test_scaled = scaler.transform(X_test)
 
   model_evaluation: &model_evaluation
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Model Evaluation <span style='color:#F1A424'>|</span></b>
+        Evaluating the model's performance on the test set.
     - type: "code"
       content: |
         # Evaluate the model
@@ -48,6 +56,10 @@ components:
             print(f'R² Score: {r2:.4f}')
 
   plot_learning_curve: &plot_learning_curve
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Learning Curve <span style='color:#F1A424'>|</span></b>
+        Visualization of the model's learning curve during training.
     - type: "code"
       content: |
         # Plot learning curve
@@ -61,6 +73,10 @@ components:
         plt.legend(['Train', 'Validation'])
 
   plot_predictions: &plot_predictions
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Predictions vs Actual <span style='color:#F1A424'>|</span></b>
+        Visualization of the model's predictions compared to the actual values.
     - type: "code"
       content: |
         # Plot predictions vs actual
@@ -74,6 +90,10 @@ components:
         plt.show()
 
   xgboost_model: &xgboost_model
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> XGBoost Model Setup <span style='color:#F1A424'>|</span></b>
+        Initialization and configuration of the XGBoost model for multiclass classification.
     - type: "code"
       content: |
         import xgboost as xgb
@@ -95,6 +115,10 @@ components:
         }
 
   xgboost_training: &xgboost_training
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> XGBoost Training & Evaluation <span style='color:#F1A424'>|</span></b>
+        Training the XGBoost model with early stopping and evaluating its performance.
     - type: "code"
       content: |
         # Train the model with early stopping
@@ -111,6 +135,10 @@ components:
         print(classification_report(y_test, y_pred))
 
   xgboost_visualization: &xgboost_visualization
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> XGBoost Visualization <span style='color:#F1A424'>|</span></b>
+        Confusion matrix and feature importance for the XGBoost model.
     - type: "code"
       content: |
         # Plot confusion matrix
@@ -144,6 +172,10 @@ components:
         plt.show()
 
   neural_net_model: &neural_net_model
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Neural Network Architecture <span style='color:#F1A424'>|</span></b>
+        Definition of the neural network architecture for regression.
     - type: "code"
       content: |
         class NeuralNetModel(nn.Module):
@@ -169,6 +201,10 @@ components:
                 return x
 
   time_series_preprocessing: &time_series_preprocessing
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Time Series Preprocessing <span style='color:#F1A424'>|</span></b>
+        Preprocessing of time series data: splitting, normalization, and extraction of features and target.
     - type: "code"
       content: |
         # Check for any missing values
@@ -189,6 +225,10 @@ components:
         y_scaled = (y - y_mean) / y_std
 
   create_sequences: &create_sequences
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Sequence Creation <span style='color:#F1A424'>|</span></b>
+        Creating sequences for sequential learning (LSTM).
     - type: "code"
       content: |
         def create_sequences(X, y, seq_length):
@@ -218,6 +258,10 @@ components:
         print(f"Test data: X = {X_test_tensor.shape}, y = {y_test_tensor.shape}")
 
   lstm_model: &lstm_model
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> LSTM Model Architecture <span style='color:#F1A424'>|</span></b>
+        Definition of the LSTM model architecture for time series forecasting.
     - type: "code"
       content: |
         class LSTMModel(nn.Module):
@@ -254,6 +298,10 @@ components:
                 return out
 
   lstm_training_setup: &lstm_training_setup
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> LSTM Training Setup <span style='color:#F1A424'>|</span></b>
+        LSTM model configuration, loss, optimizer, and DataLoader setup.
     - type: "code"
       content: |
         # Model configuration
@@ -274,6 +322,10 @@ components:
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
   training_loop: &training_loop
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Training Loop <span style='color:#F1A424'>|</span></b>
+        Training loop with early stopping and saving the best model.
     - type: "code"
       content: |
         # Training parameters
@@ -330,6 +382,10 @@ components:
         model.load_state_dict(torch.load('best_lstm_model.pth'))
 
   plot_results: &plot_results
+    - type: "markdown"
+      content: |
+        # <b><span style='color:#F1A424'>|</span> Final Results <span style='color:#F1A424'>|</span></b>
+        Visualization of the learning curve and final model predictions.
     - type: "code"
       content: |
         # Plot results

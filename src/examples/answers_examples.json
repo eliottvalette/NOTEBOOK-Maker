@@ -2,7 +2,7 @@
     "A_1_one_csv": [
         {
             "has_several_csvs": false,
-            "csv_filename": "Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv",
+            "filename": "Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv",
             "has_common_id": true,
             "common_id_column": "ID",
             "target_column": "YTarget",
@@ -16,13 +16,14 @@
             "Multiclass classification": true,
             "num_classes": 2,
             "wants_random_forest": true,
-            "wants_xgboost": true,
+            "wants_xgboost": false,
+            "wants_neural_network": true,
             "wants_pytorch": true,
             "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
         },
         {
             "leaf_id_preprocessing": "1",
-            "leaf_id_modelling": "1"
+            "leaf_id_modelling": "2"
         }
     ],
     
@@ -30,7 +31,7 @@
         {
             "has_several_csvs": true,
             "number_of_csvs": 2,
-            "csv_filenames_list": ["Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv", "Datasets/Tabular/Binary_pred/csv/dataset2_features_only.csv"],
+            "filenames_list": ["Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv", "Datasets/Tabular/Binary_pred/csv/dataset2_features_only.csv"],
             "has_common_id": true,
             "common_id_column": "ID",
             "target_column": "YTarget",
@@ -57,7 +58,7 @@
     "C_1_csv_time_series": [
         {
             "has_several_csvs": false,
-            "csv_filename": "Datasets/Tabular/Time_series/csv/dataset_time_series.csv",
+            "filename": "Datasets/Tabular/Time_series/csv/dataset_time_series.csv",
             "has_common_id": true,
             "num_classes": 2,
             "common_id_column": "ID",
@@ -76,6 +77,30 @@
         {
             "leaf_id_preprocessing": "1",
             "leaf_id_modelling": "3"
+        }
+    ],
+    "test": [
+        {
+            "has_several_files": true,
+            "filename": "Datasets/Tabular/Binary_pred/json/dataset1_with_target.json",
+            "has_common_id": false,
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "Natural_language": "I have only one json file, named dataset1_with_target.json, and it has a target column called YTarget. I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2."
+        },
+        {
+            "target_column": "YTarget",
+            "Multiclass classification": true,
+            "num_classes": 2,
+            "wants_random_forest": true,
+            "wants_xgboost": true,
+            "wants_pytorch": true,
+            "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
+        },
+        {
+            "leaf_id_preprocessing": "6",
+            "leaf_id_modelling": "1"
         }
     ]
 }
