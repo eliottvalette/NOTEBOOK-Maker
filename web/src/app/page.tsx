@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 
 export default function Home() {
@@ -28,7 +29,7 @@ export default function Home() {
       } else {
         setResult("Server error.");
       }
-    } catch (err) {
+    } catch {
       setResult("Network error.");
     } finally {
       setLoading(false);
