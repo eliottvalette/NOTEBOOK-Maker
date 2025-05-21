@@ -13,7 +13,7 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
     if (response.ok) {
         const data = await response.json();
         if (data.success) {
-            document.getElementById('result').innerHTML = `Pipeline complete! <a href="${data.notebook_url}" download>Download notebook</a>`;
+            document.getElementById('result').innerHTML = `Pipeline complete! </br><a href="${data.gen_notebook_url}" download>Download Non executed notebook</a> </br> <a href="${data.exe_notebook_url}" download>Download Executed notebook</a>`;
         } else {
             document.getElementById('result').textContent = "Pipeline failed: " + data.error;
         }

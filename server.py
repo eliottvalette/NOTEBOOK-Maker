@@ -66,13 +66,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 import subprocess
                 try:
                     result = subprocess.run(
-                        ['python', 'run.py', dataset_style],
-                        capture_output=True, text=True, check=True
+                        ['python', 'run.py', dataset_style], check=True
                     )
                     # On success, the pipeline generates Output/gen_{dataset_style}.ipynb
-                    notebook_name = f"gen_{dataset_style}.ipynb"
-                    notebook_url = f"/Output/{notebook_name}"
-                    response = {'success': True, 'notebook_url': notebook_url}
+                    gen_notebook_name = f"gen_{dataset_style}.ipynb"
+                    exe_notebook_name = f"exe_{dataset_style}.ipynb"
+                    gen_notebook_url = f"/Output/{gen_notebook_name}"
+                    exe_notebook_url = f"/Output/{exe_notebook_name}"
+                    response = {'success': True, 'gen_notebook_url': gen_notebook_url, 'exe_notebook_url': exe_notebook_url}
                 except subprocess.CalledProcessError as e:
                     # On error, return the error message
                     response = {'success': False, 'error': e.stderr}
