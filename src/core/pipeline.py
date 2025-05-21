@@ -19,9 +19,10 @@ from src.utils.mistral_calls import send_to_mistral
 from src.utils.notebook import format_notebook_cells, modelling_cells, create_and_execute_notebook
 
 class NotebookPipeline:
-    def __init__(self, dataset_style: str):
-        """Initialize the pipeline with a specific dataset style."""
+    def __init__(self, dataset_style: str, dataset_path: str = None):
+        """Initialize the pipeline with a specific dataset style and optional dataset path."""
         self.dataset_style = dataset_style
+        self.dataset_path = dataset_path
         self.mistral_api_key = os.getenv('MISTRAL_API_KEY')
         if not self.mistral_api_key:
             raise ValueError("MISTRAL_API_KEY environment variable not set")
@@ -32,10 +33,16 @@ class NotebookPipeline:
         self.output_dir = self.base_dir / 'Output'
 
     def load_datasets(self) -> List[pd.DataFrame]:
-        """Load datasets based on the dataset style."""
+        """Load datasets based on the dataset style or a custom path."""
         print(f"Loading datasets for style: {self.dataset_style}")
         
         try:
+            if self.dataset_path:
+                # Load from provided path (assume CSV for now)
+                if not os.path.exists(self.dataset_path):
+                    raise FileNotFoundError(f"Dataset file not found: {self.dataset_path}")
+                df = pd.read_csv(self.dataset_path)
+                return [df]
             if self.dataset_style == 'A_1_one_csv':
                 # Single CSV with target
                 df_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset1_with_target.csv'
@@ -43,7 +50,6 @@ class NotebookPipeline:
                     raise FileNotFoundError(f"Dataset file not found: {df_path}")
                 df = pd.read_csv(df_path)
                 return [df]
-                
             elif self.dataset_style == 'B_2_joinable_csvs':
                 # Two joinable CSVs
                 df1_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset1_with_target.csv'
@@ -162,18 +168,10 @@ class NotebookPipeline:
             print(f"Error in pipeline execution: {str(e)}")
             raise e
 
-def main():
+def main(dataset_styles):
     """Main entry point for the pipeline."""
-    try:
-        # Run pipeline for each dataset style
-        for dataset_style in ['A_1_one_csv', 'B_2_joinable_csvs', 'C_1_csv_time_series']:
-            print(f"\nProcessing dataset style: {dataset_style}")
-            pipeline = NotebookPipeline(dataset_style)
-            pipeline.run()
-            
-    except Exception as e:
-        print(f"Error in main execution: {str(e)}")
-        raise e
-
-if __name__ == "__main__":
-    main() 
+    # Run pipeline for each dataset style
+    for dataset_style in dataset_styles:
+        print(f"\nProcessing dataset style: {dataset_style}")
+        pipeline = NotebookPipeline(dataset_style)
+        pipeline.run()

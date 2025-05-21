@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notebook Maker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Notebook Maker</h1>
+    <form id="uploadForm">
+        <label for="dataset">Upload Dataset:</label>
+        <input type="file" id="dataset" name="dataset" required><br><br>
+        <label for="style">Dataset Style:</label>
+        <select id="style" name="style">
+            <option value="A_1_one_csv">A_1_one_csv</option>
+            <option value="B_2_joinable_csvs">B_2_joinable_csvs</option>
+            <option value="C_1_csv_time_series">C_1_csv_time_series</option>
+        </select><br><br>
+        <button type="submit">Run Pipeline</button>
+    </form>
+    <div id="result"></div>
+    <script src="main.js"></script>
+</body>
+</html> 
