@@ -1,21 +1,17 @@
 {
     "A_1_one_csv": [
         {
-            "has_several_csvs": false,
+            "has_several_files": false,
             "filename": "Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv",
-            "has_common_id": true,
-            "common_id_column": "ID",
             "target_column": "YTarget",
-            "Multiclass classification": true,
+            "Binary classification": true,
             "num_classes": 2,
-            "Natural_language": "I have only one csv file, named dataset1_with_target.csv, and it has a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Binary classification and set the number of classes to 2."
+            "Natural_language": "I have only one csv file, named dataset1_with_target.csv, and it has a target column called YTarget. I want to predict a binary target, so I select Binary classification and set the number of classes to 2."
         },
         {
-            "common_id_column": "ID",
             "target_column": "YTarget",
-            "Multiclass classification": true,
+            "Binary classification": true,
             "num_classes": 2,
-            "wants_random_forest": true,
             "wants_xgboost": false,
             "wants_neural_network": true,
             "wants_pytorch": true,
@@ -29,25 +25,24 @@
     
     "B_2_joinable_csvs": [
         {
-            "has_several_csvs": true,
+            "has_several_files": true,
             "number_of_csvs": 2,
             "filenames_list": ["Datasets/Tabular/Binary_pred/csv/dataset1_with_target.csv", "Datasets/Tabular/Binary_pred/csv/dataset2_features_only.csv"],
             "has_common_id": true,
             "common_id_column": "ID",
             "target_column": "YTarget",
-            "Multiclass classification": true,
+            "Binary classification": true,
             "num_classes": 2,
-            "Natural_language": "I have two csv files, named dataset1_with_target.csv and dataset2_features_only.csv. They have a common ID column called ID and a target column called YTarget. I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2."
+            "Natural_language": "I have two csv files, named dataset1_with_target.csv and dataset2_features_only.csv. They have a common ID column called ID and a target column called YTarget. I want to predict a Binary target, so I select Multiclass classification and set the number of classes to 2."
         },
         {
             "common_id_column": "ID",
             "target_column": "YTarget",
-            "Multiclass classification": true,
+            "Binary classification": true,
             "num_classes": 2,
-            "wants_random_forest": true,
             "wants_xgboost": true,
             "wants_pytorch": true,
-            "Natural_language": "I want to predict a binary target, so I select Multiclass classification and set the number of classes to 2. I also want to use Random Forest, XGBoost, and PyTorch."
+            "Natural_language": "I want to predict a binary target, so I select Binary classification and set the number of classes to 2. I also want to use XGBoost, and PyTorch."
         },
         {
             "leaf_id_preprocessing": "8",
@@ -57,22 +52,24 @@
     ],
     "C_1_csv_time_series": [
         {
-            "has_several_csvs": false,
+            "has_several_files": false,
             "filename": "Datasets/Tabular/Time_series/csv/dataset_time_series.csv",
             "has_common_id": true,
             "num_classes": 2,
             "common_id_column": "ID",
-            "target_column": "Target",
-            "Multiclass classification": false,
-            "Natural_language": "I have only one csv file, named dataset_time_series.csv, and it has a common ID column called ID and a target column called Target. I want to predict a time series, so I select Time series forecasting."
+            "target_column": "YTarget",
+            "Time series forecasting": true,
+            "Regression": true,
+            "Natural_language": "I have only one csv file, named dataset_time_series.csv, and it has a common ID column called ID and a target column called Target. I want to predict a time series, so I select Time series forecasting. The target is a continuous variable, so I also select Regression."
         },
         {
             "common_id_column": "ID",
-            "target_column": "Target",
+            "target_column": "YTarget",
             "num_classes": 2,
-            "Multiclass classification": false,
+            "Time series forecasting": true,
+            "Regression": true,
             "wants_lstm": true,
-            "Natural_language": "I want to predict a time series, so I select Time series forecasting and LSTM."
+            "Natural_language": "I want to predict a time series, so I select Time series forecasting and LSTM. The target is a continuous variable, so I also select Regression."
         },
         {
             "leaf_id_preprocessing": "1",

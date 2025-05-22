@@ -143,7 +143,7 @@ def create_time_series_dataset(n_samples: int = 10_000, n_features: int = 10,
         target[i] += np.random.normal(0, 1.0)
     
     # Add target to dataframe
-    df['Target'] = target
+    df['YTarget'] = target
 
     # Drop Index 
     df = df.reset_index(drop=True)
