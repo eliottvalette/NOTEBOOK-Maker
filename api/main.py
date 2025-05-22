@@ -34,13 +34,28 @@ def download_executed_notebook(dataset_style: str = Query(...)):
     exe_path = f"Output/exe_{dataset_style}.ipynb"
     if os.path.exists(exe_path):
         return FileResponse(exe_path, media_type="application/x-ipynb+json", filename=f"exe_{dataset_style}.ipynb")
-    return {"error": "Executed notebook not found"}
+    return {"error": "Executed notebook not found"} 
 
 @app.get("/preview-notebook/")
-def preview_notebook(dataset_style: str = Query(...)):
-    gen_path = f"Output/gen_{dataset_style}.ipynb"
-    if os.path.exists(gen_path):
+def preview_notebook(dataset_style: str = Query(...), executed: bool = Query(False)):
+    if executed:
+        nb_path = f"Output/exe_{dataset_style}.ipynb"
+    else:
+        nb_path = f"Output/gen_{dataset_style}.ipynb"
+    if os.path.exists(nb_path):
         exporter = nbconvert.HTMLExporter()
-        body, _ = exporter.from_filename(gen_path)
+        body, _ = exporter.from_filename(nb_path)
+        # Inject improved dark mode CSS
+        dark_css = '''<style>
+          body { background: #0c0b0e !important; color: #ffffff !important; }
+          .jp-Notebook, .jp-Cell, .jp-InputArea, .jp-OutputArea { background: #0c0b0e !important; color: #ffffff !important; }
+          pre, code { background: #1c1b1f !important; color: #ffffff !important; }
+          h1, h2, h3, h4, h5, h6, p, li { color: #ffffff !important; }
+          a { color: #a277ff !important; }
+          .output_area, .output_subarea { background: #1c1b1f !important; color: #ffffff !important; }
+          .cm-s-ipython span { color: #c9cbff !important; }
+        </style>'''
+        body = body.replace("</head>", f"{dark_css}</head>")
         return HTMLResponse(content=body)
     return {"error": "Notebook not found"} 
+

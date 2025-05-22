@@ -1,7 +1,9 @@
 "use client"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Select, SelectItem, SelectTrigger, SelectContent } from "@/components/ui/select"
+import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@/components/ui/select"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Download, BookOpen, CheckCircle } from "lucide-react"
 
 const DATASET_CHOICES = [
   { value: "A_1_one_csv", label: "A_1_one_csv" },
@@ -59,7 +61,9 @@ export default function Home() {
       <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-xs">
         <label className="block mb-2 font-semibold">Choisissez un style de dataset :</label>
         <Select value={choice} onValueChange={setChoice}>
-          <SelectTrigger className="w-full" />
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Theme" />
+          </SelectTrigger>
           <SelectContent>
             {DATASET_CHOICES.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>
@@ -73,41 +77,51 @@ export default function Home() {
         </Button>
       </form>
       {genNotebookUrl && (
-        <>
-          <a
-            href={genNotebookUrl}
-            download={`gen_${choice}.ipynb`}
-            className="mt-6 underline text-blue-600"
-          >
-            Télécharger le notebook généré
-          </a>
-          <button
-            type="button"
-            className="mt-2 underline text-purple-600 block"
-            onClick={() => setPreviewUrl(`http://localhost:8000/preview-notebook/?dataset_style=${choice}`)}
-          >
-            Prévisualiser le notebook généré
-          </button>
-        </>
+        <div className="w-full max-w-5xl mx-auto mt-8">
+          <Card className="w-full">
+            <CardHeader className="flex flex-row items-center gap-3">
+              <BookOpen className="text-blue-500" />
+              <CardTitle>Notebook généré</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <Button asChild variant="outline" className="flex items-center gap-2">
+                <a href={genNotebookUrl} download={`gen_${choice}.ipynb`}>
+                  <Download className="mr-2" /> Télécharger le notebook généré
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
       {exeNotebookUrl && (
-        <a
-          href={exeNotebookUrl}
-          download={`exe_${choice}.ipynb`}
-          className="mt-2 underline text-green-600"
-        >
-          Télécharger le notebook exécuté
-        </a>
-      )}
-      {previewUrl && (
-        <div className="mt-4 w-full max-w-3xl h-[600px] border relative">
-          <button
-            className="absolute top-2 right-2 bg-white border rounded px-2 py-1 z-10"
-            onClick={() => setPreviewUrl(null)}
-          >
-            Fermer la prévisualisation
-          </button>
-          <iframe src={previewUrl} className="w-full h-full" />
+        <div className="w-full max-w-5xl mx-auto mt-4">
+          <Card className="w-full">
+            <CardHeader className="flex flex-row items-center gap-3">
+              <CheckCircle className="text-green-500" />
+              <CardTitle>Notebook exécuté</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" className="flex items-center gap-2">
+                <a href={exeNotebookUrl} download={`exe_${choice}.ipynb`}>
+                  <Download className="mr-2" /> Télécharger le notebook exécuté
+                </a>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="flex items-center gap-2 mt-2"
+                onClick={() => setPreviewUrl(previewUrl ? null : `http://localhost:8000/preview-notebook/?dataset_style=${choice}&executed=true`)}
+              >
+                <BookOpen className="mr-2" />
+                {previewUrl ? "Masquer la prévisualisation" : "Prévisualiser le notebook exécuté"}
+              </Button>
+              {previewUrl && (
+                <div className="mt-4 w-full h-[400px] border rounded overflow-hidden">
+                  <iframe src={previewUrl} className="w-full h-full" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
       {error && <div className="mt-4 text-red-600">{error}</div>}
