@@ -2,8 +2,18 @@ from fastapi import FastAPI, Form, Query
 from fastapi.responses import FileResponse
 import subprocess
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# Enable CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 OUTPUT_PATH = "Output/generated_notebook.ipynb"
 
