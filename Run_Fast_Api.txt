@@ -1,0 +1,6 @@
+Terminal 1 (root) :
+uvicorn api.main:app --reload
+
+Terminal 2 (root or notebook-maker-ui) :
+cd notebook-maker-ui         
+npm run dev

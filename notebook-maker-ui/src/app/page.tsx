@@ -12,17 +12,20 @@ const DATASET_CHOICES = [
 export default function Home() {
   const [choice, setChoice] = useState(DATASET_CHOICES[0].value)
   const [loading, setLoading] = useState(false)
-  const [notebookUrl, setNotebookUrl] = useState<string | null>(null)
+  const [genNotebookUrl, setGenNotebookUrl] = useState<string | null>(null)
+  const [exeNotebookUrl, setExeNotebookUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setNotebookUrl(null)
+    setGenNotebookUrl(null)
+    setExeNotebookUrl(null)
     setError(null)
     const formData = new FormData()
     formData.append("dataset_style", choice)
     try {
+      // Généré
       const res = await fetch("http://localhost:8000/generate-notebook/", {
         method: "POST",
         body: formData,
@@ -30,11 +33,21 @@ export default function Home() {
       if (res.ok) {
         const blob = await res.blob()
         const url = window.URL.createObjectURL(blob)
-        setNotebookUrl(url)
+        setGenNotebookUrl(url)
+        // Exécuté
+        const exeRes = await fetch(`http://localhost:8000/download-executed-notebook/?dataset_style=${choice}`)
+        if (exeRes.ok) {
+          const exeBlob = await exeRes.blob()
+          const exeUrl = window.URL.createObjectURL(exeBlob)
+          setExeNotebookUrl(exeUrl)
+        } else {
+          setError("Erreur lors du téléchargement du notebook exécuté.")
+        }
       } else {
         setError("Erreur lors de la génération du notebook.")
       }
-    } catch (err) {
+    } catch (error) {
+      console.log(error)
       setError("Erreur de connexion au backend.")
     }
     setLoading(false)
@@ -58,13 +71,22 @@ export default function Home() {
           {loading ? "Génération en cours..." : "Générer le notebook"}
         </Button>
       </form>
-      {notebookUrl && (
+      {genNotebookUrl && (
         <a
-          href={notebookUrl}
-          download="notebook.ipynb"
+          href={genNotebookUrl}
+          download={`gen_${choice}.ipynb`}
           className="mt-6 underline text-blue-600"
         >
           Télécharger le notebook généré
+        </a>
+      )}
+      {exeNotebookUrl && (
+        <a
+          href={exeNotebookUrl}
+          download={`exe_${choice}.ipynb`}
+          className="mt-2 underline text-green-600"
+        >
+          Télécharger le notebook exécuté
         </a>
       )}
       {error && <div className="mt-4 text-red-600">{error}</div>}

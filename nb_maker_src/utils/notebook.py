@@ -7,6 +7,7 @@ import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 import nbclient
 from typing import List, Dict, Any
+import sys
 
 def format_notebook_cells(leaf: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Format leaf information into notebook cells."""
@@ -162,7 +163,25 @@ def create_and_execute_notebook(cells: List[Dict[str, Any]],
     """
     try:
         # Create notebook
-        notebook = new_notebook(cells=cells)
+        notebook = new_notebook(
+            cells=cells,
+            metadata={
+                "kernelspec": {
+                    "name": "python3",
+                    "display_name": "Python 3",
+                    "language": "python"
+                },
+                "language_info": {
+                    "name": "python",
+                    "version": sys.version.split(" ")[0],
+                    "mimetype": "text/x-python",
+                    "codemirror_mode": {"name": "ipython", "version": 3},
+                    "pygments_lexer": "ipython3",
+                    "nbconvert_exporter": "python",
+                    "file_extension": ".py"
+                }
+            }
+        )
         
         # Ensure output directory exists
         if not os.path.exists(output_dir):
