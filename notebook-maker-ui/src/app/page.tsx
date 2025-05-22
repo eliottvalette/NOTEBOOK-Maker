@@ -14,6 +14,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [genNotebookUrl, setGenNotebookUrl] = useState<string | null>(null)
   const [exeNotebookUrl, setExeNotebookUrl] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,13 +73,22 @@ export default function Home() {
         </Button>
       </form>
       {genNotebookUrl && (
-        <a
-          href={genNotebookUrl}
-          download={`gen_${choice}.ipynb`}
-          className="mt-6 underline text-blue-600"
-        >
-          Télécharger le notebook généré
-        </a>
+        <>
+          <a
+            href={genNotebookUrl}
+            download={`gen_${choice}.ipynb`}
+            className="mt-6 underline text-blue-600"
+          >
+            Télécharger le notebook généré
+          </a>
+          <button
+            type="button"
+            className="mt-2 underline text-purple-600 block"
+            onClick={() => setPreviewUrl(`http://localhost:8000/preview-notebook/?dataset_style=${choice}`)}
+          >
+            Prévisualiser le notebook généré
+          </button>
+        </>
       )}
       {exeNotebookUrl && (
         <a
@@ -88,6 +98,17 @@ export default function Home() {
         >
           Télécharger le notebook exécuté
         </a>
+      )}
+      {previewUrl && (
+        <div className="mt-4 w-full max-w-3xl h-[600px] border relative">
+          <button
+            className="absolute top-2 right-2 bg-white border rounded px-2 py-1 z-10"
+            onClick={() => setPreviewUrl(null)}
+          >
+            Fermer la prévisualisation
+          </button>
+          <iframe src={previewUrl} className="w-full h-full" />
+        </div>
       )}
       {error && <div className="mt-4 text-red-600">{error}</div>}
     </main>
