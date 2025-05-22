@@ -5,12 +5,22 @@ import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Download, BookOpen, CheckCircle, UploadCloud } from "lucide-react"
+import React from "react"
 
 const DATASET_CHOICES = [
   { value: "A_1_one_csv", label: "A_1_one_csv" },
   { value: "B_2_joinable_csvs", label: "B_2_joinable_csvs" },
   { value: "C_1_csv_time_series", label: "C_1_csv_time_series" },
 ]
+
+const DEFAULT_ANSWERS = {
+  target_column: "",
+  num_classes: 2,
+  modelling_type: "Neural network",
+  Target_type: "Binary classification",
+  wants_pytorch: true,
+  Natural_language: ""
+}
 
 export default function Home() {
   const [choice, setChoice] = useState(DATASET_CHOICES[0].value)
@@ -19,7 +29,11 @@ export default function Home() {
   const [genNotebookUrl, setGenNotebookUrl] = useState<string | null>(null)
   const [exeNotebookUrl, setExeNotebookUrl] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [answers, setAnswers] = useState(DEFAULT_ANSWERS)
+  const [jsonPreview, setJsonPreview] = useState<string>(JSON.stringify(DEFAULT_ANSWERS, null, 2))
+  const [loadingAnswers, setLoadingAnswers] = useState(false)
+  const [genNotebookUrlAnswers, setGenNotebookUrlAnswers] = useState<string | null>(null)
+  const [errorAnswers, setErrorAnswers] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -32,7 +46,6 @@ export default function Home() {
     setLoading(true)
     setGenNotebookUrl(null)
     setExeNotebookUrl(null)
-    setError(null)
     const formData = new FormData()
     formData.append("dataset_style", choice)
     files.forEach(file => formData.append("files", file))
@@ -52,16 +65,57 @@ export default function Home() {
           const exeUrl = window.URL.createObjectURL(exeBlob)
           setExeNotebookUrl(exeUrl)
         } else {
-          setError("Erreur lors du téléchargement du notebook exécuté.")
+          setErrorAnswers("Erreur lors du téléchargement du notebook exécuté.")
         }
       } else {
-        setError("Erreur lors de la génération du notebook.")
+        setErrorAnswers("Erreur lors de la génération du notebook.")
       }
     } catch (error) {
       console.log(error)
-      setError("Erreur de connexion au backend.")
+      setErrorAnswers("Erreur de connexion au backend.")
     }
     setLoading(false)
+  }
+
+  const handleAnswersChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target
+    let newVal: string | boolean = value
+    if (type === "checkbox" && e.target instanceof HTMLInputElement) {
+      newVal = e.target.checked
+    }
+    setAnswers(prev => {
+      const updated = { ...prev, [name]: type === "number" ? Number(newVal) : newVal }
+      setJsonPreview(JSON.stringify(updated, null, 2))
+      return updated
+    })
+  }
+
+  const handleSubmitAnswers = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoadingAnswers(true)
+    setGenNotebookUrlAnswers(null)
+    setErrorAnswers(null)
+    const formData = new FormData()
+    formData.append("dataset_style", choice)
+    files.forEach(file => formData.append("files", file))
+    formData.append("answers", JSON.stringify(answers))
+    try {
+      const res = await fetch("http://localhost:8000/submit-answers/", {
+        method: "POST",
+        body: formData,
+      })
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        setGenNotebookUrlAnswers(url)
+      } else {
+        setErrorAnswers("Erreur lors de la génération du notebook (answers).")
+      }
+    } catch (error) {
+      console.log(error)
+      setErrorAnswers("Erreur de connexion au backend (answers).")
+    }
+    setLoadingAnswers(false)
   }
 
   return (
@@ -144,7 +198,60 @@ export default function Home() {
           </Card>
         </div>
       )}
-      {error && <div className="mt-4 text-red-600">{error}</div>}
+      {/* Nouveau formulaire pour answers JSON */}
+      <form onSubmit={handleSubmitAnswers} className="space-y-4 w-full max-w-xs mt-10 p-4 border rounded bg-gray-900">
+        <h2 className="font-bold text-lg mb-2">Formulaire avancé (answers JSON)</h2>
+        <div>
+          <label className="block mb-1">Target column</label>
+          <Input name="target_column" value={answers.target_column} onChange={handleAnswersChange} />
+        </div>
+        <div>
+          <label className="block mb-1">Nombre de classes</label>
+          <Input name="num_classes" type="number" value={answers.num_classes} onChange={handleAnswersChange} />
+        </div>
+        <div>
+          <label className="block mb-1">Type de modèle</label>
+          <select name="modelling_type" value={answers.modelling_type} onChange={handleAnswersChange} className="w-full p-2 rounded bg-gray-800">
+            <option value="Neural network">Neural network</option>
+            <option value="XGBoost">XGBoost</option>
+            <option value="Random Forest">Random Forest</option>
+            <option value="LSTM">LSTM</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label className="block mb-1">Type de cible</label>
+          <select name="Target_type" value={answers.Target_type} onChange={handleAnswersChange} className="w-full p-2 rounded bg-gray-800">
+            <option value="Binary classification">Binaire</option>
+            <option value="Multiclass classification">Multiclasse</option>
+            <option value="Continuous">Continue (régression)</option>
+            <option value="Time series forecasting">Série temporelle</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="checkbox" name="wants_pytorch" checked={answers.wants_pytorch} onChange={handleAnswersChange} />
+          <label>Utiliser PyTorch</label>
+        </div>
+        <div>
+          <label className="block mb-1">Description (optionnel)</label>
+          <textarea name="Natural_language" value={answers.Natural_language} onChange={handleAnswersChange} className="w-full p-2 rounded bg-gray-800" />
+        </div>
+        <Button type="submit" disabled={loadingAnswers || files.length === 0} className="w-full mt-2 flex items-center gap-2">
+          {loadingAnswers ? "Envoi en cours..." : "Envoyer answers + fichiers"}
+        </Button>
+        <div className="mt-2">
+          <label className="block font-semibold mb-1">Prévisualisation du JSON answers :</label>
+          <pre className="bg-gray-800 text-xs p-2 rounded overflow-x-auto max-h-40">{jsonPreview}</pre>
+        </div>
+        {genNotebookUrlAnswers && (
+          <Button asChild variant="outline" className="flex items-center gap-2 mt-2">
+            <a href={genNotebookUrlAnswers} download={`gen_${choice}_answers.ipynb`}>
+              <Download className="mr-2" /> Télécharger le notebook généré (answers)
+            </a>
+          </Button>
+        )}
+        {errorAnswers && <div className="mt-2 text-red-600">{errorAnswers}</div>}
+      </form>
     </main>
   )
 }

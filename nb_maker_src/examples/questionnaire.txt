@@ -1,0 +1,43 @@
+1. Type de données
+[ ] Tabulaire
+[ ] Image
+[ ] Tabulaire et Image
+
+Si tabulaire,
+Colonnes d'identification et de cible (question seulement si plusieurs fichiers soumis)
+Vos fichiers partagent-ils une colonne d'identifiant commun ? (ex : ID)
+[ ] Oui
+[ ] Non
+Si oui, quel est le nom de cette colonne ? __
+Quelle est la colonne cible (celle que vous voulez prédire) ? __
+
+Type de problème
+Quel est le type de variable cible ?
+[ ] Binaire (2 classes)
+[ ] Multiclasse (plus de 2 classes)
+[ ] Continue (régression)
+[ ] Série temporelle (prédiction dans le temps)
+
+Si classification, combien de classes ? __
+
+Modélisation
+Quel(s) type(s) de modèle souhaitez-vous utiliser ?
+[ ] Réseau de neurones
+[ ] XGBoost
+[ ] Random Forest
+[ ] LSTM (pour séries temporelles)
+[ ] Autre : __
+
+Préférences techniques
+Voulez-vous utiliser PyTorch ?
+[ ] Oui
+[ ] Non
+
+Description en langage naturel (optionnel)
+Décrivez brièvement votre cas d'usage ou ce que vous souhaitez faire : __
+
+Si image,
+pas de question
+
+Si tabulaire et image,
+pas de question
