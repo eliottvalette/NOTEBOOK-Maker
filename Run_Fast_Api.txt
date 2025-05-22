@@ -4,3 +4,10 @@ uvicorn api.main:app --reload
 Terminal 2 (root or notebook-maker-ui) :
 cd notebook-maker-ui         
 npm run dev
+
+
+
+
+Add new Shadcn/UI components :
+cd notebook-maker-ui
+npx shadcn@latest add ...

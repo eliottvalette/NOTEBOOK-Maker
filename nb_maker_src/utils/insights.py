@@ -6,8 +6,17 @@ import pandas as pd
 from typing import List, Dict, Any
 from .config import load_form_answers
 
-def get_insights(df: pd.DataFrame, idx: int, target_col_name: str = 'None') -> str:
+def get_insights_on_df(df_path: str, idx: int, target_col_name: str = 'None') -> str:
     """Get insights from a single dataset."""
+
+    df_path = str(df_path)  # Ensure df_path is a string
+    if df_path.split('.')[-1] == 'csv':
+        df = pd.read_csv(df_path)
+    elif df_path.split('.')[-1] == 'xlsx':
+        df = pd.read_excel(df_path)
+    elif df_path.split('.')[-1] == 'parquet':
+        df = pd.read_parquet(df_path)
+
     insights = f"Insights from dataset {idx}:\n"
     
     # Shape
@@ -38,23 +47,25 @@ def get_insights(df: pd.DataFrame, idx: int, target_col_name: str = 'None') -> s
     
     return insights
 
-def get_insights_and_answers(*dfs: pd.DataFrame, dataset_style: str) -> str:
+def get_insights_and_answers(*dfs_paths: List[str], 
+                            ans_preprocessing: str) -> str:
     """Gather insights from all datasets and form answers."""
     insights = ""
-    for i, df in enumerate(dfs, start=1):
-        insights += get_insights(df, i)
-        insights += "\n"
+    for i, df_path in enumerate(dfs_paths, start=1):
+        df_path_str = str(df_path)
+        if df_path_str.split('.')[-1] in ['csv', 'xlsx', 'parquet']:
+            insights += get_insights_on_df(df_path_str, i)
+            insights += "\n"
     
     # Add form answers
-    form_answers_preprocessing, _, _, _ = load_form_answers(dataset_style)
     insights += "User's form answers:\n"
-    insights += str(form_answers_preprocessing)
+    insights += str(ans_preprocessing)
     
     return insights
 
-def get_insights_for_modelling(insights: str, dataset_style: str) -> str:
+def get_insights_for_modelling(insights: str, 
+                               ans_modelling: str) -> str:
     """Prepare insights for the modelling phase."""
-    _, form_answers_modelling, _, _ = load_form_answers(dataset_style)
     insights_modelling = insights + "\n\nUser's form answers for modelling:\n"
-    insights_modelling += str(form_answers_modelling)
+    insights_modelling += str(ans_modelling)
     return insights_modelling 

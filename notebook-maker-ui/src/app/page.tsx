@@ -2,8 +2,9 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Download, BookOpen, CheckCircle } from "lucide-react"
+import { Download, BookOpen, CheckCircle, UploadCloud } from "lucide-react"
 
 const DATASET_CHOICES = [
   { value: "A_1_one_csv", label: "A_1_one_csv" },
@@ -13,11 +14,18 @@ const DATASET_CHOICES = [
 
 export default function Home() {
   const [choice, setChoice] = useState(DATASET_CHOICES[0].value)
+  const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [genNotebookUrl, setGenNotebookUrl] = useState<string | null>(null)
   const [exeNotebookUrl, setExeNotebookUrl] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,8 +35,8 @@ export default function Home() {
     setError(null)
     const formData = new FormData()
     formData.append("dataset_style", choice)
+    files.forEach(file => formData.append("files", file))
     try {
-      // Généré
       const res = await fetch("http://localhost:8000/generate-notebook/", {
         method: "POST",
         body: formData,
@@ -72,7 +80,19 @@ export default function Home() {
             ))}
           </SelectContent>
         </Select>
-        <Button type="submit" disabled={loading} className="w-full mt-4">
+        <div>
+          <label className="block mb-2 font-semibold">Import your files :</label>
+          <Input type="file" multiple onChange={handleFileChange} />
+          {files.length > 0 && (
+            <ul className="mt-2 text-xs text-gray-500">
+              {files.map((file, idx) => (
+                <li key={idx}>{file.name}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <Button type="submit" disabled={loading || files.length === 0} className="w-full mt-4 flex items-center gap-2">
+          <UploadCloud className="mr-2" />
           {loading ? "Génération en cours..." : "Générer le notebook"}
         </Button>
       </form>

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Form, Query
+from fastapi import FastAPI, Form, Query, UploadFile, File
+from typing import List
 from fastapi.responses import FileResponse, HTMLResponse
 import subprocess
 import os
@@ -19,11 +20,17 @@ app.add_middleware(
 OUTPUT_PATH = "Output/generated_notebook.ipynb"
 
 @app.post("/generate-notebook/")
-def generate_notebook(dataset_style: str = Form(...)):
-    # Appelle run.py avec le dataset_style choisi
-    subprocess.run([
-        "python", "run.py", dataset_style
-    ], check=True)
+async def generate_notebook(dataset_style: str = Form(...), files: List[UploadFile] = File(...)):
+    # Sauvegarder les fichiers uploadés
+    upload_dir = "UploadedFiles"
+    os.makedirs(upload_dir, exist_ok=True)
+    file_paths = []
+    for file in files:
+        file_path = os.path.join(upload_dir, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        file_paths.append(file_path)
+    subprocess.run(["python", "run.py", dataset_style, *file_paths], check=True)
     gen_path = f"Output/gen_{dataset_style}.ipynb"
     if os.path.exists(gen_path):
         return FileResponse(gen_path, media_type="application/x-ipynb+json", filename=f"gen_{dataset_style}.ipynb")

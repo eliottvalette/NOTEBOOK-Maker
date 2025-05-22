@@ -1,49 +1,40 @@
-# Automated Data Science Notebook Generator (Prototype)
+# Automated Data Science Notebook Generator
 
-This project is a prototype of a fully automated pipeline that ingests user-provided data, determines appropriate analysis/modeling objectives, and generates executable Jupyter notebooks through an intelligent decision tree system powered by Mistral API.
+## Project Description
 
-## Work in Progress
-**Note: This project is currently under active development.** The decision tree structure and some core components are still being built and refined.
+This project provides an automated pipeline for generating and executing Jupyter notebooks tailored to specific data analysis and modeling tasks. The system leverages decision trees and large language models (Mistral API) to dynamically determine preprocessing and modeling steps based on the characteristics of the input data. The solution is designed to streamline the workflow from raw data ingestion to the delivery of ready-to-use, executable notebooks.
 
-## Project Overview
+## Key Features
 
-The main goal is to streamline the data analysis and modeling workflow by:
-- Automatically analyzing input datasets
-- Routing through a decision tree based on data characteristics and user preferences
-- Generating and executing custom Jupyter notebooks tailored to specific analysis needs
+- **Automated Data Analysis**: Ingests user-selected datasets and performs initial inspection and feature analysis.
+- **Decision Tree-Driven Workflow**: Utilizes structured YAML-based decision trees to guide preprocessing and modeling choices.
+- **LLM Integration**: Integrates with the Mistral API to enhance decision-making and code generation at each step.
+- **Dynamic Notebook Generation**: Assembles context-aware code and markdown cells into a Jupyter notebook, customized for the selected dataset and analysis objectives.
+- **Notebook Execution**: Automatically executes the generated notebook, producing a version with results and visualizations.
+- **Web Interface**: Provides a modern web interface for dataset selection, notebook generation, download, and preview.
 
-## Current Data Support
+## System Architecture
 
-The pipeline is structured based on the decision trees defined in YAML files and currently supports:
+- **Frontend**: Built with Next.js and React, the interface allows users to select dataset styles, trigger notebook generation, and preview or download results.
+- **API Backend**: FastAPI serves as the backend, exposing endpoints for notebook generation, execution, and preview. It manages communication between the frontend and the pipeline.
+- **Pipeline**: The core pipeline (Python) orchestrates data loading, decision tree traversal, LLM calls, notebook assembly, and execution. Outputs are stored in the `Output/` directory.
 
-## Pipeline Architecture
+## Workflow Overview
 
-1. **Data Ingestion**
-   - Loading various data formats according to preprocessing decision tree
-   - Basic data inspection and feature analysis
+1. **Dataset Selection**: The user selects a dataset style via the web interface.
+2. **Notebook Generation**: The frontend sends a request to the FastAPI backend, which triggers the pipeline to generate and execute a notebook based on the selected dataset.
+3. **Output Delivery**: The backend provides endpoints to download the generated and executed notebooks, or to preview them as HTML in the browser.
 
-2. **User Preferences Collection**
-   - Configuration parameters collected through form answers (currently simulated in code)
-   - Analysis objectives determination
+## Output
 
-3. **Decision Tree Logic**
-   - Structured YAML-defined decision trees for preprocessing and modeling
-   - Mistral API integration for intelligent routing through the decision trees
+- Generated and executed notebooks are saved in the `Output/` directory, named according to the dataset style (e.g., `gen_A_1_one_csv.ipynb`, `exe_A_1_one_csv.ipynb`).
+- Notebooks can be downloaded or previewed directly from the web interface.
 
-4. **Dynamic Notebook Generation**
-   - Context-aware code cell generation
-   - Model selection based on data characteristics
-   - Code generation for preprocessing, modeling, visualization, and evaluation
+## Extensibility
 
-5. **Execution Engine**
-   - Automatic notebook execution
-   - Results and visualizations generation
+The system is designed for modularity and extensibility. Decision trees, code templates, and data ingestion logic can be adapted to support new data types, analysis tasks, or modeling techniques as requirements evolve.
 
-## Decision Tree System
+## Development Status
 
-The system uses two primary decision trees:
-- **Preprocessing Decision Tree**: Determines how to handle data based on format and structure
-- **Modeling Decision Tree**: Selects appropriate modeling techniques based on task type
-
-Each leaf node in the decision trees contains specific code templates that are assembled into a complete notebook.
+This project is under active development. The decision tree logic, LLM integration, and user interface are subject to ongoing refinement and extension.
 

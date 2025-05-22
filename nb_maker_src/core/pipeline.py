@@ -19,10 +19,9 @@ from nb_maker_src.utils.mistral_calls import send_to_mistral
 from nb_maker_src.utils.notebook import format_notebook_cells, modelling_cells, create_and_execute_notebook
 
 class NotebookPipeline:
-    def __init__(self, dataset_style: str, dataset_path: str = None):
+    def __init__(self, dataset_style: str, dfs_paths: List[str]):
         """Initialize the pipeline with a specific dataset style and optional dataset path."""
         self.dataset_style = dataset_style
-        self.dataset_path = dataset_path
         self.mistral_api_key = os.getenv('MISTRAL_API_KEY')
         if not self.mistral_api_key:
             raise ValueError("MISTRAL_API_KEY environment variable not set")
@@ -31,74 +30,17 @@ class NotebookPipeline:
         self.base_dir = Path(__file__).parent.parent.parent
         self.datasets_dir = self.base_dir / 'Datasets'
         self.output_dir = self.base_dir / 'Output'
+        self.dfs_paths = dfs_paths
 
-    def load_datasets(self) -> List[pd.DataFrame]:
-        """Load datasets based on the dataset style or a custom path."""
-        print(f"Loading datasets for style: {self.dataset_style}")
-        
-        try:
-            if self.dataset_path:
-                # Load from provided path (assume CSV for now)
-                if not os.path.exists(self.dataset_path):
-                    raise FileNotFoundError(f"Dataset file not found: {self.dataset_path}")
-                df = pd.read_csv(self.dataset_path)
-                return [df]
-            if self.dataset_style == 'A_1_one_csv':
-                # Single CSV with target
-                df_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset1_with_target.csv'
-                if not df_path.exists():
-                    raise FileNotFoundError(f"Dataset file not found: {df_path}")
-                df = pd.read_csv(df_path)
-                return [df]
-            elif self.dataset_style == 'B_2_joinable_csvs':
-                # Two joinable CSVs
-                df1_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset1_with_target.csv'
-                df2_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'csv' / 'dataset2_features_only.csv'
-                
-                if not df1_path.exists():
-                    raise FileNotFoundError(f"Dataset file not found: {df1_path}")
-                if not df2_path.exists():
-                    raise FileNotFoundError(f"Dataset file not found: {df2_path}")
-                    
-                df1 = pd.read_csv(df1_path)
-                df2 = pd.read_csv(df2_path)
-                return [df1, df2]
-                
-            elif self.dataset_style == 'C_1_csv_time_series':
-                # Time series CSV
-                df_path = self.datasets_dir / 'Tabular' / 'Time_series' / 'csv' / 'dataset_time_series.csv'
-                if not df_path.exists():
-                    raise FileNotFoundError(f"Dataset file not found: {df_path}")
-                df = pd.read_csv(df_path)
-                return [df]
-            
-            elif self.dataset_style == 'test':
-                # Test dataset
-                df_path = self.datasets_dir / 'Tabular' / 'Binary_pred' / 'excel' / 'dataset1_with_target.xlsx'
-                if not df_path.exists():
-                    raise FileNotFoundError(f"Dataset file not found: {df_path}")
-                df = pd.read_excel(df_path)
-                return [df]
-                
-            else:
-                raise ValueError(f"Unknown dataset style: {self.dataset_style}")
-                
-        except Exception as e:
-            print(f"Error loading datasets: {str(e)}")
-            raise
-
-    def run(self) -> bool:
+    def run(self, ans_preprocessing, ans_modelling) -> bool:
         """Run the complete pipeline."""
         try:
             print("Starting automated pipeline...")
-            
-            # Load datasets
-            print("Loading datasets...")
-            dfs = self.load_datasets()
-            
+
             # Get insights and form answers
             print("Extracting insights from data...")
-            insights = get_insights_and_answers(*dfs, dataset_style=self.dataset_style)
+            insights = get_insights_and_answers(*self.dfs_paths, 
+                                                ans_preprocessing = ans_preprocessing)
             
             # Load decision trees
             print("Loading decision trees...")
@@ -120,7 +62,7 @@ class NotebookPipeline:
             
             # Modelling phase
             print("Getting new insights for Modelling...")
-            insights_modelling = get_insights_for_modelling(insights, dataset_style=self.dataset_style)
+            insights_modelling = get_insights_for_modelling(insights, ans_modelling)
             
             print("Consulting Mistral LLM for Modelling decisions...")
             leaf_modelling = send_to_mistral(insights=insights_modelling, 
@@ -168,10 +110,9 @@ class NotebookPipeline:
             print(f"Error in pipeline execution: {str(e)}")
             raise e
 
-def main(dataset_styles):
+def main(dataset_style, dfs_paths, ans_preprocessing, ans_modelling, manual = False):
     """Main entry point for the pipeline."""
     # Run pipeline for each dataset style
-    for dataset_style in dataset_styles:
-        print(f"\nProcessing dataset style: {dataset_style}")
-        pipeline = NotebookPipeline(dataset_style)
-        pipeline.run()
+    print(f"\nProcessing dataset style: {dataset_style}")
+    pipeline = NotebookPipeline(dataset_style, dfs_paths)
+    pipeline.run(ans_preprocessing, ans_modelling)
