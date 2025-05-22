@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     # RUNNING MANUALLY
     else:
-        dataset_styles = ['A_1_one_csv', 'B_2_joinable_csvs', 'C_1_csv_time_series']
+        dataset_styles = ['A_1_one_csv', 'B_2_joinable_csvs', 'C_1_csv_time_series', 'test']
         for style in dataset_styles:
             dfs_paths = get_datasets_paths(style)
             ans_preprocessing, ans_modelling, _, _ = load_form_answers(style)
