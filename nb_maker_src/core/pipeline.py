@@ -13,10 +13,10 @@ src_path = str(Path(__file__).parent.parent.parent)
 if src_path not in sys.path:
     sys.path.append(src_path)
 
-from src.utils.config import load_decision_trees, load_form_answers
-from src.utils.insights import get_insights_and_answers, get_insights_for_modelling
-from src.utils.mistral_calls import send_to_mistral
-from src.utils.notebook import format_notebook_cells, modelling_cells, create_and_execute_notebook
+from nb_maker_src.utils.config import load_decision_trees, load_form_answers
+from nb_maker_src.utils.insights import get_insights_and_answers, get_insights_for_modelling
+from nb_maker_src.utils.mistral_calls import send_to_mistral
+from nb_maker_src.utils.notebook import format_notebook_cells, modelling_cells, create_and_execute_notebook
 
 class NotebookPipeline:
     def __init__(self, dataset_style: str, dataset_path: str = None):
