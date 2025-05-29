@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Download, BookOpen, CheckCircle, UploadCloud } from "lucide-react"
 import React from "react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
 const DATASET_CHOICES = [
   { value: "A_1_one_csv", label: "A_1_one_csv" },
@@ -30,10 +33,8 @@ export default function Home() {
   const [exeNotebookUrl, setExeNotebookUrl] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [answers, setAnswers] = useState(DEFAULT_ANSWERS)
-  const [jsonPreview, setJsonPreview] = useState<string>(JSON.stringify(DEFAULT_ANSWERS, null, 2))
-  const [loadingAnswers, setLoadingAnswers] = useState(false)
-  const [genNotebookUrlAnswers, setGenNotebookUrlAnswers] = useState<string | null>(null)
-  const [errorAnswers, setErrorAnswers] = useState<string | null>(null)
+  const [step, setStep] = useState(1)
+  const [questionnaireCompleted, setQuestionnaireCompleted] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -65,14 +66,14 @@ export default function Home() {
           const exeUrl = window.URL.createObjectURL(exeBlob)
           setExeNotebookUrl(exeUrl)
         } else {
-          setErrorAnswers("Erreur lors du téléchargement du notebook exécuté.")
+          console.error("Erreur lors du téléchargement du notebook exécuté.")
         }
       } else {
-        setErrorAnswers("Erreur lors de la génération du notebook.")
+        console.error("Erreur lors de la génération du notebook.")
       }
     } catch (error) {
       console.log(error)
-      setErrorAnswers("Erreur de connexion au backend.")
+      console.error("Erreur de connexion au backend.")
     }
     setLoading(false)
   }
@@ -83,48 +84,16 @@ export default function Home() {
     if (type === "checkbox" && e.target instanceof HTMLInputElement) {
       newVal = e.target.checked
     }
-    setAnswers(prev => {
-      const updated = { ...prev, [name]: type === "number" ? Number(newVal) : newVal }
-      setJsonPreview(JSON.stringify(updated, null, 2))
-      return updated
-    })
-  }
-
-  const handleSubmitAnswers = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoadingAnswers(true)
-    setGenNotebookUrlAnswers(null)
-    setErrorAnswers(null)
-    const formData = new FormData()
-    formData.append("dataset_style", choice)
-    files.forEach(file => formData.append("files", file))
-    formData.append("answers", JSON.stringify(answers))
-    try {
-      const res = await fetch("http://localhost:8000/submit-answers/", {
-        method: "POST",
-        body: formData,
-      })
-      if (res.ok) {
-        const blob = await res.blob()
-        const url = window.URL.createObjectURL(blob)
-        setGenNotebookUrlAnswers(url)
-      } else {
-        setErrorAnswers("Erreur lors de la génération du notebook (answers).")
-      }
-    } catch (error) {
-      console.log(error)
-      setErrorAnswers("Erreur de connexion au backend (answers).")
-    }
-    setLoadingAnswers(false)
+    setAnswers(prev => ({ ...prev, [name]: type === "number" ? Number(newVal) : newVal }))
   }
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen">
       <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-xs">
-        <label className="block mb-2 font-semibold">Choisissez un style de dataset :</label>
+        <label className="block mb-2 font-semibold">Choose a dataset style:</label>
         <Select value={choice} onValueChange={setChoice}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Theme" />
+            <SelectValue placeholder="Dataset style" />
           </SelectTrigger>
           <SelectContent>
             {DATASET_CHOICES.map(opt => (
@@ -135,7 +104,7 @@ export default function Home() {
           </SelectContent>
         </Select>
         <div>
-          <label className="block mb-2 font-semibold">Import your files :</label>
+          <label className="block mb-2 font-semibold">Upload your files:</label>
           <Input type="file" multiple onChange={handleFileChange} />
           {files.length > 0 && (
             <ul className="mt-2 text-xs text-gray-500">
@@ -145,22 +114,98 @@ export default function Home() {
             </ul>
           )}
         </div>
-        <Button type="submit" disabled={loading || files.length === 0} className="w-full mt-4 flex items-center gap-2">
-          <UploadCloud className="mr-2" />
-          {loading ? "Génération en cours..." : "Générer le notebook"}
-        </Button>
+        {files.length > 0 && !questionnaireCompleted && (
+          <div className="space-y-4 border border-gray-600 rounded-xl p-4">
+            <Tabs value={String(step)} onValueChange={val => setStep(Number(val))}>
+              <TabsList className="w-full">
+                <TabsTrigger value="1" className="w-full">1</TabsTrigger>
+                <TabsTrigger value="2" className="w-full">2</TabsTrigger>
+                <TabsTrigger value="3" className="w-full">3</TabsTrigger>
+              </TabsList>
+              <TabsContent value="1" className="space-y-2">
+                <div>
+                  <label className="block mb-1">Target column</label>
+                  <Input name="target_column" value={answers.target_column} onChange={handleAnswersChange} className="w-full" />
+                </div>
+                <div>
+                  <label className="block mb-1">Number of classes</label>
+                  <Input name="num_classes" type="number" value={answers.num_classes} onChange={handleAnswersChange} className="w-full" />
+                </div>
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" disabled>Previous</Button>
+                  <Button type="button" onClick={() => setStep(2)}>Next</Button>
+                </div>
+              </TabsContent>
+              <TabsContent value="2" className="space-y-2">
+                <div>
+                  <label className="block mb-1">Model type</label>
+                  <Select value={answers.modelling_type} onValueChange={value => setAnswers(prev => ({ ...prev, modelling_type: value }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a model type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Neural network">Neural network</SelectItem>
+                      <SelectItem value="XGBoost">XGBoost</SelectItem>
+                      <SelectItem value="Random Forest">Random Forest</SelectItem>
+                      <SelectItem value="LSTM">LSTM</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block mb-1">Target type</label>
+                  <Select value={answers.Target_type} onValueChange={value => setAnswers(prev => ({ ...prev, Target_type: value }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a target type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Binary classification">Binary classification</SelectItem>
+                      <SelectItem value="Multiclass classification">Multiclass classification</SelectItem>
+                      <SelectItem value="Continuous">Continuous (regression)</SelectItem>
+                      <SelectItem value="Time series forecasting">Time series forecasting</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>Previous</Button>
+                  <Button type="button" onClick={() => setStep(3)}>Next</Button>
+                </div>
+              </TabsContent>
+              <TabsContent value="3" className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox name="wants_pytorch" checked={answers.wants_pytorch} onCheckedChange={(checked) => setAnswers(prev => ({ ...prev, wants_pytorch: checked === true }))} />
+                  <label>Use PyTorch</label>
+                </div>
+                <div>
+                  <label className="block mb-1">Description (optional)</label>
+                  <Textarea name="Natural_language" value={answers.Natural_language} onChange={handleAnswersChange} className="w-full p-2 rounded bg-input focus:bg-input" />
+                </div>
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={() => setStep(2)}>Previous</Button>
+                  <Button type="button" onClick={() => setQuestionnaireCompleted(true)}>Finish</Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+        {questionnaireCompleted && (
+          <Button type="submit" disabled={loading || files.length === 0} className="w-full mt-4 flex items-center gap-2">
+            <UploadCloud className="mr-2" />
+            {loading ? "Generating..." : "Generate notebook"}
+          </Button>
+        )}
       </form>
       {genNotebookUrl && (
         <div className="w-full max-w-5xl mx-auto mt-8">
           <Card className="w-full">
             <CardHeader className="flex flex-row items-center gap-3">
               <BookOpen className="text-blue-500" />
-              <CardTitle>Notebook généré</CardTitle>
+              <CardTitle>Generated Notebook</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               <Button asChild variant="outline" className="flex items-center gap-2">
                 <a href={genNotebookUrl} download={`gen_${choice}.ipynb`}>
-                  <Download className="mr-2" /> Télécharger le notebook généré
+                  <Download className="mr-2" /> Download generated notebook
                 </a>
               </Button>
             </CardContent>
@@ -172,12 +217,12 @@ export default function Home() {
           <Card className="w-full">
             <CardHeader className="flex flex-row items-center gap-3">
               <CheckCircle className="text-green-500" />
-              <CardTitle>Notebook exécuté</CardTitle>
+              <CardTitle>Executed Notebook</CardTitle>
             </CardHeader>
             <CardContent>
               <Button asChild variant="outline" className="flex items-center gap-2">
                 <a href={exeNotebookUrl} download={`exe_${choice}.ipynb`}>
-                  <Download className="mr-2" /> Télécharger le notebook exécuté
+                  <Download className="mr-2" /> Download executed notebook
                 </a>
               </Button>
               <Button
@@ -187,7 +232,7 @@ export default function Home() {
                 onClick={() => setPreviewUrl(previewUrl ? null : `http://localhost:8000/preview-notebook/?dataset_style=${choice}&executed=true`)}
               >
                 <BookOpen className="mr-2" />
-                {previewUrl ? "Masquer la prévisualisation" : "Prévisualiser le notebook exécuté"}
+                {previewUrl ? "Hide preview" : "Preview executed notebook"}
               </Button>
               {previewUrl && (
                 <div className="mt-4 w-full h-[400px] border rounded overflow-hidden">
@@ -198,60 +243,6 @@ export default function Home() {
           </Card>
         </div>
       )}
-      {/* Nouveau formulaire pour answers JSON */}
-      <form onSubmit={handleSubmitAnswers} className="space-y-4 w-full max-w-xs mt-10 p-4 border rounded bg-gray-900">
-        <h2 className="font-bold text-lg mb-2">Formulaire avancé (answers JSON)</h2>
-        <div>
-          <label className="block mb-1">Target column</label>
-          <Input name="target_column" value={answers.target_column} onChange={handleAnswersChange} />
-        </div>
-        <div>
-          <label className="block mb-1">Nombre de classes</label>
-          <Input name="num_classes" type="number" value={answers.num_classes} onChange={handleAnswersChange} />
-        </div>
-        <div>
-          <label className="block mb-1">Type de modèle</label>
-          <select name="modelling_type" value={answers.modelling_type} onChange={handleAnswersChange} className="w-full p-2 rounded bg-gray-800">
-            <option value="Neural network">Neural network</option>
-            <option value="XGBoost">XGBoost</option>
-            <option value="Random Forest">Random Forest</option>
-            <option value="LSTM">LSTM</option>
-            <option value="Autre">Autre</option>
-          </select>
-        </div>
-        <div>
-          <label className="block mb-1">Type de cible</label>
-          <select name="Target_type" value={answers.Target_type} onChange={handleAnswersChange} className="w-full p-2 rounded bg-gray-800">
-            <option value="Binary classification">Binaire</option>
-            <option value="Multiclass classification">Multiclasse</option>
-            <option value="Continuous">Continue (régression)</option>
-            <option value="Time series forecasting">Série temporelle</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <input type="checkbox" name="wants_pytorch" checked={answers.wants_pytorch} onChange={handleAnswersChange} />
-          <label>Utiliser PyTorch</label>
-        </div>
-        <div>
-          <label className="block mb-1">Description (optionnel)</label>
-          <textarea name="Natural_language" value={answers.Natural_language} onChange={handleAnswersChange} className="w-full p-2 rounded bg-gray-800" />
-        </div>
-        <Button type="submit" disabled={loadingAnswers || files.length === 0} className="w-full mt-2 flex items-center gap-2">
-          {loadingAnswers ? "Envoi en cours..." : "Envoyer answers + fichiers"}
-        </Button>
-        <div className="mt-2">
-          <label className="block font-semibold mb-1">Prévisualisation du JSON answers :</label>
-          <pre className="bg-gray-800 text-xs p-2 rounded overflow-x-auto max-h-40">{jsonPreview}</pre>
-        </div>
-        {genNotebookUrlAnswers && (
-          <Button asChild variant="outline" className="flex items-center gap-2 mt-2">
-            <a href={genNotebookUrlAnswers} download={`gen_${choice}_answers.ipynb`}>
-              <Download className="mr-2" /> Télécharger le notebook généré (answers)
-            </a>
-          </Button>
-        )}
-        {errorAnswers && <div className="mt-2 text-red-600">{errorAnswers}</div>}
-      </form>
     </main>
   )
 }

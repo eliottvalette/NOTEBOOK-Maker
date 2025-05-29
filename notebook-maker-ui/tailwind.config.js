@@ -10,11 +10,6 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  safelist: [
-    {
-      pattern: /^bg-flash-[1-5]$/,
-    },
-  ],
   theme: {
   	extend: {
   		fontFamily: {
