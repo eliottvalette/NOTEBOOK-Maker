@@ -95,5 +95,5 @@ async def submit_answers(
     gen_path = f"Output/gen_{dataset_style}.ipynb"
     if os.path.exists(gen_path):
         return FileResponse(gen_path, media_type="application/x-ipynb+json", filename=f"gen_{dataset_style}.ipynb")
-    return {"error": "Notebook not found"}
+    return {"error": "Notebook not found"} 
 
