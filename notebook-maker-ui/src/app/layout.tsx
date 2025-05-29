@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Script from "next/script";
 import { SidebarWrapper } from "@/components/SidebarWrapper";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -16,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dopamine Maxeur",
-  description: "Dopamine Maxeur",
+  title: "Notebook Maker",
+  description: "Notebook Maker",
 };
 
 export default function RootLayout({
@@ -27,10 +26,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <Script src="/game/MIDIFile.js" strategy="beforeInteractive" />
-        <Script src="/game/WebAudioFontPlayer.js" strategy="beforeInteractive" />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground`}>
         <SidebarWrapper>
           {children}

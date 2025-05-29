@@ -61,7 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props}>
       <SidebarHeader>
         <div className="px-2 py-6 flex items-center">
-          <span className="text-lg font-bold">DopamineMaxeur</span>
+          <span className="text-lg font-bold">Notebook Maker</span>
         </div>
       </SidebarHeader>
 

@@ -65,7 +65,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-grid bg-[#111111] flex flex-col">
       <main className="flex flex-1 items-center justify-center px-4 flex-col">
-        <span className="text-xl max-w-[26rem] w-full text-left mb-8 font-bold">Dopamine Maxeur</span>
+        <span className="text-xl max-w-[26rem] w-full text-left mb-8 font-bold">Notebook Maker</span>
         <Card className="w-full max-w-[26rem] shadow-lg border-gray-200 dark:border-[#262626] bg-white/90 dark:bg-[#111111]/90 backdrop-blur-sm">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center text-gray-900 dark:text-[#FAFAFA]">
