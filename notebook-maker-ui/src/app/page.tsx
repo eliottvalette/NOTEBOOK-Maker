@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Download, BookOpen, CheckCircle, UploadCloud } from "lucide-react"
 import React from "react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
 
 const DATASET_CHOICES = [
   { value: "A_1_one_csv", label: "A_1_one_csv" },
@@ -35,6 +36,7 @@ export default function Home() {
   const [answers, setAnswers] = useState(DEFAULT_ANSWERS)
   const [step, setStep] = useState(1)
   const [questionnaireCompleted, setQuestionnaireCompleted] = useState(false)
+  const { toast } = useToast()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -50,8 +52,9 @@ export default function Home() {
     const formData = new FormData()
     formData.append("dataset_style", choice)
     files.forEach(file => formData.append("files", file))
+    formData.append("answers", JSON.stringify(answers))
     try {
-      const res = await fetch("http://localhost:8000/generate-notebook/", {
+      const res = await fetch("/api/generate-notebook/", {
         method: "POST",
         body: formData,
       })
@@ -60,20 +63,36 @@ export default function Home() {
         const url = window.URL.createObjectURL(blob)
         setGenNotebookUrl(url)
         // Exécuté
-        const exeRes = await fetch(`http://localhost:8000/download-executed-notebook/?dataset_style=${choice}`)
+        const exeRes = await fetch(`/api/download-executed-notebook/?dataset_style=${choice}`)
         if (exeRes.ok) {
           const exeBlob = await exeRes.blob()
           const exeUrl = window.URL.createObjectURL(exeBlob)
           setExeNotebookUrl(exeUrl)
+          toast({
+            title: "Succès",
+            description: "Notebook généré et exécuté avec succès.",
+          })
         } else {
-          console.error("Erreur lors du téléchargement du notebook exécuté.")
+          toast({
+            title: "Erreur",
+            description: "Erreur lors du téléchargement du notebook exécuté.",
+            variant: "destructive",
+          })
         }
       } else {
-        console.error("Erreur lors de la génération du notebook.")
+        toast({
+          title: "Erreur",
+          description: "Erreur lors de la génération du notebook.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      console.log(error)
-      console.error("Erreur de connexion au backend.")
+      console.error(error)
+      toast({
+        title: "Erreur",
+        description: "Erreur de connexion au backend.",
+        variant: "destructive",
+      })
     }
     setLoading(false)
   }
@@ -116,7 +135,7 @@ export default function Home() {
         </div>
         {files.length > 0 && !questionnaireCompleted && (
           <div className="space-y-4 border border-gray-600 rounded-xl p-4">
-            <Tabs value={String(step)} onValueChange={val => setStep(Number(val))}>
+            <Tabs value={String(step)} onValueChange={val => setStep(Number(val))} className="h-[20rem]">
               <TabsList className="w-full">
                 <TabsTrigger value="1" className="w-full">1</TabsTrigger>
                 <TabsTrigger value="2" className="w-full">2</TabsTrigger>
@@ -145,10 +164,9 @@ export default function Home() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Neural network">Neural network</SelectItem>
-                      <SelectItem value="XGBoost">XGBoost</SelectItem>
                       <SelectItem value="Random Forest">Random Forest</SelectItem>
-                      <SelectItem value="LSTM">LSTM</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="LSTM (Time Series)">LSTM (Time Series)</SelectItem>
+                      <SelectItem value="No preference">No preference</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -160,8 +178,8 @@ export default function Home() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Binary classification">Binary classification</SelectItem>
-                      <SelectItem value="Multiclass classification">Multiclass classification</SelectItem>
-                      <SelectItem value="Continuous">Continuous (regression)</SelectItem>
+                      <SelectItem value="Multiclass classification">Multiclass classification (3 or more classes)</SelectItem>
+                      <SelectItem value="Continuous">Continuous</SelectItem>
                       <SelectItem value="Time series forecasting">Time series forecasting</SelectItem>
                     </SelectContent>
                   </Select>
@@ -229,7 +247,7 @@ export default function Home() {
                 type="button"
                 variant="ghost"
                 className="flex items-center gap-2 mt-2"
-                onClick={() => setPreviewUrl(previewUrl ? null : `http://localhost:8000/preview-notebook/?dataset_style=${choice}&executed=true`)}
+                onClick={() => setPreviewUrl(previewUrl ? null : `/api/preview-notebook/?dataset_style=${choice}&executed=true`)}
               >
                 <BookOpen className="mr-2" />
                 {previewUrl ? "Hide preview" : "Preview executed notebook"}

@@ -10,11 +10,13 @@ from nb_maker_src.utils.config import load_form_answers
 
 if __name__ == "__main__":
     # COMMING FROM API
+    print(f'sys.argv: {sys.argv}')
     if len(sys.argv) > 1: 
         dataset_styles = sys.argv[1]
         dfs_paths = [sys.argv[2]]
         ans_preprocessing = sys.argv[3]
-        ans_modelling = sys.argv[4]
+        ans_modelling = sys.argv[3]
+        print(f'dataset_styles: {dataset_styles} dfs_paths: {dfs_paths} ans_preprocessing: {ans_preprocessing} ans_modelling: {ans_modelling}')
         main(dataset_style = dataset_styles, 
              dfs_paths = dfs_paths, 
              ans_preprocessing = ans_preprocessing, 
