@@ -147,7 +147,7 @@ parso==0.8.4
 patsy==1.0.1
 peewee==3.17.7
 pexpect==4.9.0
-pillow==11.2.1
+pillow==12.3.0
 platformdirs==4.3.7
 postgrest==0.19.1
 prometheus_client==0.21.1
