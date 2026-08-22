@@ -99,7 +99,7 @@ jupyterlab_pygments==0.3.0
 jupyterlab_server==2.27.3
 jupyterlab_widgets==3.0.14
 kaggle==1.6.17
-keras==3.7.0
+keras==3.15.0
 kiwisolver==1.4.8
 libclang==18.1.1
 lightgbm==4.5.0
