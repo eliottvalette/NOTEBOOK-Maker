@@ -224,7 +224,7 @@ torch==2.8.0.dev20250519
 torchaudio==2.6.0.dev20250519
 torchvision==0.22.0.dev20250519
 torchviz==0.0.3
-tornado==6.4.2
+tornado==6.5.7
 tqdm==4.66.5
 traitlets==5.14.3
 transformers==4.51.3
