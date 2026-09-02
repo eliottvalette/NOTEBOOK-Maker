@@ -124,7 +124,7 @@ export default function Home() {
         </Select>
         <div>
           <label className="block mb-2 font-semibold">Upload your files:</label>
-          <Input type="file" multiple onChange={handleFileChange} />
+          <Input type="file" onChange={handleFileChange} />
           {files.length > 0 && (
             <ul className="mt-2 text-xs text-gray-500">
               {files.map((file, idx) => (
@@ -254,7 +254,13 @@ export default function Home() {
               </Button>
               {previewUrl && (
                 <div className="mt-4 w-full h-[400px] border rounded overflow-hidden">
-                  <iframe src={previewUrl} className="w-full h-full" />
+                  <iframe
+                    src={previewUrl}
+                    className="w-full h-full"
+                    sandbox=""
+                    referrerPolicy="no-referrer"
+                    title="Executed notebook preview"
+                  />
                 </div>
               )}
             </CardContent>
