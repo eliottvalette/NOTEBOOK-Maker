@@ -7,3 +7,8 @@ __pycache__
 node_modules/
 UploadedFiles/
 Output/
+.env 2.example
+api/main 2.py
+notebook-maker-ui/eslint.config 2.mjs
+notebook-maker-ui/src/lib/firebase 2.ts
+requirements 2.txt
