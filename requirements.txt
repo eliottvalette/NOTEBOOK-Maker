@@ -227,7 +227,7 @@ torchviz==0.0.3
 tornado==6.4.2
 tqdm==4.66.5
 traitlets==5.14.3
-transformers==4.51.3
+transformers==5.10.1
 trio==0.29.0
 trio-websocket==0.12.2
 typer==0.14.0
